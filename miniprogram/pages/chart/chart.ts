@@ -8,9 +8,12 @@ import { daysAgoStr } from '../../utils/date'
 /**
  * 趋势页。
  *
- * Canvas 2D 节点必须等 onReady 之后才查得到，而切 tab 回来只触发 onShow，
- * 所以用 canvasReady 标记：onReady 里初始化一次画布并落下 ctx，
- * onShow 只负责取数 + 重绘（若画布还没就绪则跳过绘制，由 onReady 兜底）。
+ * Canvas 2D 节点必须等 onReady 之后才查得到，而切 tab 回来只触发 onShow。
+ *
+ * 关键时序：onReady 时 hasData 还是 false，wxss 的 .chart-canvas.is-hidden
+ * 把高度压成 0，此刻量到的尺寸是 0 —— 不能拿它初始化位图，否则整页图表永久空白。
+ * 所以 initCanvas 遇到零尺寸就不缓存、保持未就绪，由 redraw 在真正有数据、
+ * 布局已恢复之后重试一次。绘制统一从 setData 的回调里触发，确保量到的是新布局。
  */
 
 const RANGES: { key: ChartRange; label: string; days: number }[] = [
@@ -44,7 +47,10 @@ Page({
     void this.load()
   },
 
-  /** 查询 canvas 节点、按 dpr 放大位图、缓存 ctx。回调在初始化完成后触发。 */
+  /**
+   * 查询 canvas 节点、按 dpr 放大位图、缓存 ctx。done 只在初始化成功后触发。
+   * 量到零尺寸（无数据时 canvas 被 is-hidden 折叠）就直接放弃，等下次重试。
+   */
   initCanvas(done: () => void): void {
     wx.createSelectorQuery()
       .select('#weight-chart')
@@ -55,11 +61,14 @@ Page({
           console.warn('[chart] canvas node not found')
           return
         }
+        if (!ref.width || !ref.height) return
+
         const canvas = ref.node
         const ctx = canvas.getContext('2d')
         const dpr = wx.getWindowInfo().pixelRatio
 
-        // canvas 位图尺寸 = CSS 尺寸 × dpr，再 scale(dpr) —— 否则高分屏上线条发虚
+        // canvas 位图尺寸 = CSS 尺寸 × dpr，再 scale(dpr) —— 否则高分屏上线条发虚。
+        // 给 width/height 赋值会重置 ctx 的变换矩阵，所以重复初始化不会叠加 scale。
         canvas.width = ref.width * dpr
         canvas.height = ref.height * dpr
         ctx.scale(dpr, dpr)
@@ -84,13 +93,17 @@ Page({
       this.points = rows.map((r: WeightRecord) => ({ date: r.date, weight: r.weight }))
       this.targetWeight = profile.targetWeight
 
-      this.setData({
-        loading: false,
-        hasData: this.points.length > 0,
-        count: this.points.length,
-        stat: summarize(this.points),
-      })
-      this.redraw()
+      // 在 setData 回调里重绘：此时 hasData 已生效、canvas 恢复了高度，
+      // initCanvas 才量得到真实尺寸（见文件头时序说明）
+      this.setData(
+        {
+          loading: false,
+          hasData: this.points.length > 0,
+          count: this.points.length,
+          stat: summarize(this.points),
+        },
+        () => this.redraw()
+      )
     } catch (err) {
       this.setData({ loading: false, hasData: false })
       console.error('[chart] load failed', err)
@@ -99,7 +112,11 @@ Page({
   },
 
   redraw(): void {
-    if (!this.ctx) return
+    // cssHeight 为 0 说明 onReady 那次量到的是被折叠的 canvas，得等有数据后重量一次
+    if (!this.ctx || !this.cssHeight) {
+      if (this.points.length > 0) this.initCanvas(() => this.redraw())
+      return
+    }
     drawWeightChart(this.ctx, {
       width: this.cssWidth,
       height: this.cssHeight,

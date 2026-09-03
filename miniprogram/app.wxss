@@ -66,8 +66,10 @@ page {
   font-size: 32rpx;
 }
 
+/* 主按钮都是 view + bindtap，没有原生 disabled，必须靠 pointer-events 挡点击 */
 .btn-primary.is-disabled {
   background: #c8c9cc;
+  pointer-events: none;
 }
 
 .btn-ghost {

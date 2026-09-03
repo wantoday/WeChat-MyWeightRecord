@@ -25,10 +25,13 @@ function beijingHour() {
   return (new Date().getUTCHours() + 8) % 24
 }
 
+function pad2(n) {
+  return n < 10 ? `0${n}` : `${n}`
+}
+
 function beijingDateStr() {
   const t = new Date(Date.now() + 8 * 3600 * 1000)
-  const p = (n) => (n < 10 ? `0${n}` : `${n}`)
-  return `${t.getUTCFullYear()}-${p(t.getUTCMonth() + 1)}-${p(t.getUTCDate())}`
+  return `${t.getUTCFullYear()}-${pad2(t.getUTCMonth() + 1)}-${pad2(t.getUTCDate())}`
 }
 
 /** 分页取出本小时该提醒的全部用户 */
@@ -86,7 +89,9 @@ exports.main = async () => {
         // 字段名必须与后台模板一致，见文件头注释
         data: {
           thing1: { value: '今天还没记录体重' },
-          time2: { value: `${today} ${hour}:00` },
+          // 小时必须补零：time 类型字段要 24 小时制 HH:MM，'8:00' 会被判非法
+          // 而报 47003 —— 那样「提醒设在 0-9 点的用户永远收不到」，很难查
+          time2: { value: `${today} ${pad2(hour)}:00` },
         },
       })
       sent++

@@ -96,6 +96,11 @@ Page({
   },
 
   async onSave(): Promise<void> {
+    // 必须挡住重入：upsertByDate 是「先查后写」，请求还在飞的时候再点一次，
+    // 两次都会查到当天无记录、各自 add 一条，直接破坏「每天一条」不变量。
+    // 按钮是个 view，saving 只改了样式，光靠 UI 拦不住连点。
+    if (this.data.saving) return
+
     const weight = Number(this.data.input)
     // 20-300kg 之外几乎必然是误输入（少打小数点、多打一位）
     if (!weight || Number.isNaN(weight) || weight < 20 || weight > 300) {
