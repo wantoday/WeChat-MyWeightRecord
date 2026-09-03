@@ -12,6 +12,7 @@
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f5f6f8"
   },
+  "renderer": "webview",
   "tabBar": {
     "color": "#8a8a8e",
     "selectedColor": "#07c160",

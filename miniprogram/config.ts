@@ -6,7 +6,7 @@
  */
 
 /** 云开发环境 ID。'' 表示未配置，app.ts 会在启动时报错提示。 */
-export const CLOUD_ENV_ID = ''
+export const CLOUD_ENV_ID = 'cloud1-d2gtj3uab09610477'
 
 /** 云数据库集合名 */
 export const COLLECTION = {
