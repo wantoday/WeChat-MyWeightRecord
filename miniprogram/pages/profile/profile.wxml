@@ -1,0 +1,49 @@
+<view class="page-pad">
+
+  <view class="card">
+    <view class="row" bindtap="onEditHeight">
+      <text class="row-label">身高</text>
+      <text class="row-value">{{heightCm ? heightCm + ' cm' : '未设置 ›'}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="row" bindtap="onEditTarget">
+      <text class="row-label">目标体重</text>
+      <text class="row-value">{{targetWeight ? targetWeight + ' kg' : '未设置 ›'}}</text>
+    </view>
+    <view class="range-tip" wx:if="{{rangeText}}">{{rangeText}}</view>
+  </view>
+
+  <view class="card">
+    <view class="row">
+      <text class="row-label">每日提醒</text>
+      <switch
+        checked="{{reminderEnabled}}"
+        color="#07c160"
+        bindchange="onToggleReminder"
+      />
+    </view>
+
+    <block wx:if="{{reminderEnabled}}">
+      <view class="divider"></view>
+      <picker
+        mode="selector"
+        range="{{hours}}"
+        value="{{reminderHour}}"
+        bindchange="onPickHour"
+      >
+        <view class="row">
+          <text class="row-label">提醒时间</text>
+          <text class="row-value">{{hourLabel}} ›</text>
+        </view>
+      </picker>
+    </block>
+  </view>
+
+  <view class="card">
+    <view class="row">
+      <text class="row-label">累计记录</text>
+      <text class="row-value">{{recordCount}} 条</text>
+    </view>
+  </view>
+
+</view>

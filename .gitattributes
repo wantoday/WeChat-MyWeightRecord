@@ -1,0 +1,9 @@
+# 仓库内统一存 LF，检出也用 LF。
+# 当前所有源文件本来就是 LF，这条主要是防将来换机器 clone 或协作者带着
+# core.autocrlf=true 参与时，把 wxml/wxss/ts 改成 CRLF。
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary

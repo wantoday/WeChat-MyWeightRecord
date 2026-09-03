@@ -1,0 +1,52 @@
+<view class="page-pad">
+
+  <!-- 范围切换 -->
+  <view class="seg">
+    <view
+      wx:for="{{ranges}}"
+      wx:key="key"
+      class="seg-item {{range === item.key ? 'is-active' : ''}}"
+      data-key="{{item.key}}"
+      bindtap="onRangeTap"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="card chart-card">
+    <!-- canvas 必须用 type="2d"；节点尺寸由 wxss 定死，脚本按 dpr 放大位图 -->
+    <canvas
+      id="weight-chart"
+      type="2d"
+      class="chart-canvas {{hasData ? '' : 'is-hidden'}}"
+    ></canvas>
+
+    <view class="empty" wx:if="{{!loading && !hasData}}">
+      还没有记录，去「打卡」记一笔吧
+    </view>
+  </view>
+
+  <!-- 区间统计 -->
+  <view class="card" wx:if="{{stat}}">
+    <view class="card-title">共 {{count}} 条记录</view>
+    <view class="stats">
+      <view class="stat">
+        <text class="stat-value">{{stat.min}}</text>
+        <text class="stat-key">最低</text>
+      </view>
+      <view class="stat">
+        <text class="stat-value">{{stat.max}}</text>
+        <text class="stat-key">最高</text>
+      </view>
+      <view class="stat">
+        <text class="stat-value">{{stat.avg}}</text>
+        <text class="stat-key">平均</text>
+      </view>
+      <view class="stat">
+        <text class="stat-value {{stat.delta < 0 ? 'is-down' : (stat.delta > 0 ? 'is-up' : '')}}">
+          {{stat.delta > 0 ? '+' : ''}}{{stat.delta}}
+        </text>
+        <text class="stat-key">区间变化</text>
+      </view>
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,5 @@
+.range-tip {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  padding-top: 12rpx;
+}

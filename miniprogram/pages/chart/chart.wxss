@@ -1,0 +1,69 @@
+/* 分段控件 */
+.seg {
+  display: flex;
+  background: #ebebf0;
+  border-radius: 14rpx;
+  padding: 6rpx;
+  margin-bottom: 24rpx;
+}
+
+.seg-item {
+  flex: 1;
+  text-align: center;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 26rpx;
+  color: var(--text-sub);
+  border-radius: 10rpx;
+}
+
+.seg-item.is-active {
+  background: #fff;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.chart-card {
+  padding: 16rpx 8rpx;
+}
+
+/* 高度写死，脚本据此按 dpr 设置位图尺寸；改这里要同步确认图表内边距够用 */
+.chart-canvas {
+  width: 100%;
+  height: 440rpx;
+}
+
+.chart-canvas.is-hidden {
+  height: 0;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: 500;
+}
+
+.stat-value.is-down {
+  color: var(--brand);
+}
+
+.stat-value.is-up {
+  color: #ff9500;
+}
+
+.stat-key {
+  font-size: 22rpx;
+  color: var(--text-sub);
+}

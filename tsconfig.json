@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "lib": ["ES2020"],
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "sourceMap": true,
+    "typeRoots": ["./typings"],
+    "removeComments": false
+  },
+  "include": ["./miniprogram/**/*.ts", "./typings/**/*.d.ts"],
+  "exclude": ["node_modules", "cloudfunctions"]
+}

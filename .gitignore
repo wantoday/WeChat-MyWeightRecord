@@ -1,0 +1,22 @@
+# 微信开发者工具本地私有配置（含本地路径、个人 appid 设置）
+project.private.config.json
+
+# TS 编译产物：开发者工具会在 .ts 旁边生成同名 .js/.js.map
+miniprogram/**/*.js
+miniprogram/**/*.js.map
+
+# 依赖（本项目默认不需要，装了也不要提交 / 不要让 OneDrive 同步）
+node_modules/
+cloudfunctions/*/node_modules/
+miniprogram_npm/
+
+# Claude Code 的本地权限设置，属于个人配置不共享。
+# 这条目前也被 ~/.config/git/ignore 全局忽略，但那是本机才有的规则，
+# 写进仓库才能保证 clone 到别处也不会误提交。共享设置应放 .claude/settings.json。
+.claude/settings.local.json
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

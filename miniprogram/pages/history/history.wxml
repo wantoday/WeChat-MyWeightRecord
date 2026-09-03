@@ -1,0 +1,37 @@
+<view class="page-pad">
+
+  <view class="empty" wx:if="{{!loading && rows.length === 0}}">
+    还没有记录
+  </view>
+
+  <view class="card list" wx:if="{{rows.length > 0}}">
+    <view
+      wx:for="{{rows}}"
+      wx:key="_id"
+      class="item"
+      data-id="{{item._id}}"
+      data-date="{{item.date}}"
+      data-weight="{{item.weight}}"
+      bindtap="onTapRow"
+      bindlongpress="onLongPressRow"
+    >
+      <view class="item-left">
+        <text class="item-date">{{item.label}}</text>
+        <text class="item-note" wx:if="{{item.note}}">{{item.note}}</text>
+      </view>
+      <view class="item-right">
+        <text class="item-weight">{{item.weight}}</text>
+        <text class="item-unit">kg</text>
+        <text class="item-delta is-{{item.deltaDir}}" wx:if="{{item.delta}}">{{item.delta}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="list-foot" wx:if="{{rows.length > 0}}">
+    <text wx:if="{{loadingMore}}">加载中…</text>
+    <text wx:elif="{{noMore}}">没有更多了</text>
+  </view>
+
+  <view class="hint" wx:if="{{rows.length > 0}}">点击修改 · 长按删除</view>
+
+</view>

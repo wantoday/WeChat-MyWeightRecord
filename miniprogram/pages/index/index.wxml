@@ -1,0 +1,51 @@
+<view class="page-pad">
+
+  <!-- 录入卡片 -->
+  <view class="card entry">
+    <view class="card-title">{{dateLabel}}的体重</view>
+
+    <view class="entry-input">
+      <input
+        class="weight-field"
+        type="digit"
+        placeholder="0.0"
+        value="{{input}}"
+        bindinput="onInput"
+        confirm-type="done"
+        bindconfirm="onSave"
+      />
+      <text class="unit">kg</text>
+    </view>
+
+    <view class="delta" wx:if="{{deltaText}}">{{deltaText}}</view>
+
+    <view
+      class="btn-primary {{saving ? 'is-disabled' : ''}}"
+      bindtap="onSave"
+    >{{saving ? '保存中…' : (savedWeight ? '更新记录' : '打卡')}}</view>
+  </view>
+
+  <!-- BMI -->
+  <view class="card" wx:if="{{bmi}}">
+    <view class="card-title">BMI</view>
+    <view class="bmi-line">
+      <text class="bmi-value" style="color:{{bmi.color}}">{{bmi.value}}</text>
+      <text class="bmi-label" style="background:{{bmi.color}}">{{bmi.label}}</text>
+    </view>
+  </view>
+
+  <!-- 未填身高时引导 -->
+  <view class="card tip" wx:elif="{{!loading && !heightCm}}" bindtap="goProfile">
+    <text>填写身高后可查看 BMI ›</text>
+  </view>
+
+  <!-- 目标进度 -->
+  <view class="card" wx:if="{{targetWeight}}">
+    <view class="card-title">目标 {{targetWeight}}kg</view>
+    <view class="bar">
+      <view class="bar-fill" style="width:{{progress}}%"></view>
+    </view>
+    <view class="bar-pct">{{progress}}%</view>
+  </view>
+
+</view>

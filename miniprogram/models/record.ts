@@ -1,0 +1,93 @@
+import { PAGE_SIZE } from '../config'
+import { cmd, recordsCol } from './db'
+import type { WeightRecord } from './types'
+
+/**
+ * 体重记录的数据访问层。页面里不要直连 wx.cloud.database()，统一走这里。
+ *
+ * 关键约束：小程序端单次 collection.get() 最多返回 20 条。
+ * 任何可能超过 20 条的查询都必须分页（见 fetchAllSince）。
+ */
+
+/** 分页拉取，按日期倒序。用于历史列表。 */
+export async function listPage(skip: number, limit = PAGE_SIZE): Promise<WeightRecord[]> {
+  const res = await recordsCol().orderBy('date', 'desc').skip(skip).limit(limit).get()
+  return res.data
+}
+
+/**
+ * 拉取 fromDate（含）之后的全部记录，按日期升序。用于图表。
+ * 内部循环分页绕开 20 条上限；maxPages 是防跑飞的兜底，
+ * 按 20 条/页算最多 2000 条（约 5 年半的每日记录）。
+ */
+export async function fetchAllSince(fromDate: string, maxPages = 100): Promise<WeightRecord[]> {
+  const out: WeightRecord[] = []
+  for (let page = 0; page < maxPages; page++) {
+    const res = await recordsCol()
+      .where({ date: cmd().gte(fromDate) })
+      .orderBy('date', 'asc')
+      .skip(page * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .get()
+    out.push(...res.data)
+    if (res.data.length < PAGE_SIZE) break
+  }
+  return out
+}
+
+/** 全部记录（升序）。图表的 'all' 范围用。 */
+export function fetchAll(): Promise<WeightRecord[]> {
+  return fetchAllSince('0000-00-00')
+}
+
+/** 指定日期的记录，无则 null */
+export async function getByDate(date: string): Promise<WeightRecord | null> {
+  const res = await recordsCol().where({ date }).limit(1).get()
+  return res.data[0] ?? null
+}
+
+/** 最新一条（日期最大），无则 null */
+export async function getLatest(): Promise<WeightRecord | null> {
+  const res = await recordsCol().orderBy('date', 'desc').limit(1).get()
+  return res.data[0] ?? null
+}
+
+/** 最早一条（日期最小），用作目标进度的起始体重 */
+export async function getEarliest(): Promise<WeightRecord | null> {
+  const res = await recordsCol().orderBy('date', 'asc').limit(1).get()
+  return res.data[0] ?? null
+}
+
+/**
+ * 按日期写入：当天已有记录则覆盖，否则新增。
+ * 「每天一条」是这个 App 的核心不变量，数据库层没有唯一索引，靠这里保证 ——
+ * 所有写入路径都必须经过本函数，不要在页面里直接 add()。
+ */
+export async function upsertByDate(
+  date: string,
+  weight: number,
+  note?: string
+): Promise<void> {
+  const now = Date.now()
+  const existing = await getByDate(date)
+
+  if (existing) {
+    await recordsCol()
+      .doc(existing._id)
+      .update({ data: { weight, note: note ?? '', updatedAt: now } })
+    return
+  }
+
+  await recordsCol().add({
+    data: { date, weight, note: note ?? '', createdAt: now, updatedAt: now },
+  })
+}
+
+export async function removeRecord(id: string): Promise<void> {
+  await recordsCol().doc(id).remove()
+}
+
+export async function countRecords(): Promise<number> {
+  const res = await recordsCol().count()
+  return res.total
+}

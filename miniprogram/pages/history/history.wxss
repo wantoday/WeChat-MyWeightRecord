@@ -1,0 +1,76 @@
+.list {
+  padding: 0 32rpx;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 108rpx;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.item-date {
+  font-size: 30rpx;
+}
+
+.item-note {
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+.item-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+
+.item-weight {
+  font-size: 34rpx;
+  font-weight: 500;
+}
+
+.item-unit {
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+/* 变化量，固定宽度让多行对齐 */
+.item-delta {
+  font-size: 24rpx;
+  min-width: 84rpx;
+  text-align: right;
+  color: var(--text-sub);
+}
+
+.item-delta.is-down {
+  color: var(--brand);
+}
+
+.item-delta.is-up {
+  color: #ff9500;
+}
+
+.list-foot {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-sub);
+  padding: 16rpx 0;
+}
+
+.hint {
+  text-align: center;
+  font-size: 22rpx;
+  color: var(--text-sub);
+  padding: 8rpx 0 32rpx;
+}

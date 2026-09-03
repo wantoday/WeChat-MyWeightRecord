@@ -1,0 +1,81 @@
+.entry {
+  text-align: center;
+  padding: 48rpx 32rpx 32rpx;
+}
+
+.entry-input {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin: 24rpx 0 8rpx;
+}
+
+.weight-field {
+  font-size: 120rpx;
+  font-weight: 300;
+  line-height: 1.1;
+  min-width: 260rpx;
+  text-align: right;
+  color: var(--text);
+}
+
+.unit {
+  font-size: 36rpx;
+  color: var(--text-sub);
+  margin-left: 12rpx;
+}
+
+.delta {
+  font-size: 26rpx;
+  color: var(--text-sub);
+  margin-bottom: 32rpx;
+}
+
+.entry .btn-primary {
+  margin-top: 24rpx;
+}
+
+.bmi-line {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.bmi-value {
+  font-size: 64rpx;
+  font-weight: 500;
+}
+
+.bmi-label {
+  color: #fff;
+  font-size: 24rpx;
+  padding: 4rpx 20rpx;
+  border-radius: 999rpx;
+}
+
+.tip {
+  color: var(--text-sub);
+  font-size: 26rpx;
+}
+
+/* 目标进度条 */
+.bar {
+  height: 20rpx;
+  background: var(--line);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 999rpx;
+  transition: width 0.3s ease;
+}
+
+.bar-pct {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--text-sub);
+  text-align: right;
+}

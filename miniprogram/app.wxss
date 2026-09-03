@@ -1,0 +1,88 @@
+/* 全局设计变量与通用类。页面样式优先复用这里的 class，避免每页重复定义卡片/按钮。 */
+
+page {
+  --brand: #07c160;
+  --brand-light: #e8f9ef;
+  --text: #1a1a1a;
+  --text-sub: #8a8a8e;
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --line: #ececf0;
+  --danger: #ff3b30;
+
+  background: var(--bg);
+  color: var(--text);
+  font-size: 28rpx;
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.page-pad {
+  padding: 24rpx;
+}
+
+/* 卡片容器 */
+.card {
+  background: var(--card);
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.card-title {
+  font-size: 26rpx;
+  color: var(--text-sub);
+  margin-bottom: 16rpx;
+}
+
+/* 左右分栏的一行，常用于「标签 + 值」 */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+}
+
+.row-label {
+  color: var(--text);
+}
+
+.row-value {
+  color: var(--text-sub);
+}
+
+.divider {
+  height: 1rpx;
+  background: var(--line);
+}
+
+/* 主按钮 */
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border-radius: 16rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  text-align: center;
+  font-size: 32rpx;
+}
+
+.btn-primary.is-disabled {
+  background: #c8c9cc;
+}
+
+.btn-ghost {
+  border: 1rpx solid var(--line);
+  color: var(--text-sub);
+  border-radius: 16rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+}
+
+/* 空状态 */
+.empty {
+  padding: 120rpx 0;
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 26rpx;
+}
