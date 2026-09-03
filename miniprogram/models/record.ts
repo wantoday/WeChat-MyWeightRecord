@@ -12,7 +12,7 @@ import type { WeightRecord } from './types'
 /** 分页拉取，按日期倒序。用于历史列表。 */
 export async function listPage(skip: number, limit = PAGE_SIZE): Promise<WeightRecord[]> {
   const res = await recordsCol().orderBy('date', 'desc').skip(skip).limit(limit).get()
-  return res.data
+  return res.data as WeightRecord[]
 }
 
 /**
@@ -29,7 +29,7 @@ export async function fetchAllSince(fromDate: string, maxPages = 100): Promise<W
       .skip(page * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .get()
-    out.push(...res.data)
+    out.push(...(res.data as WeightRecord[]))
     if (res.data.length < PAGE_SIZE) break
   }
   return out
@@ -43,19 +43,19 @@ export function fetchAll(): Promise<WeightRecord[]> {
 /** 指定日期的记录，无则 null */
 export async function getByDate(date: string): Promise<WeightRecord | null> {
   const res = await recordsCol().where({ date }).limit(1).get()
-  return res.data[0] ?? null
+  return (res.data[0] as WeightRecord | undefined) ?? null
 }
 
 /** 最新一条（日期最大），无则 null */
 export async function getLatest(): Promise<WeightRecord | null> {
   const res = await recordsCol().orderBy('date', 'desc').limit(1).get()
-  return res.data[0] ?? null
+  return (res.data[0] as WeightRecord | undefined) ?? null
 }
 
 /** 最早一条（日期最小），用作目标进度的起始体重 */
 export async function getEarliest(): Promise<WeightRecord | null> {
   const res = await recordsCol().orderBy('date', 'asc').limit(1).get()
-  return res.data[0] ?? null
+  return (res.data[0] as WeightRecord | undefined) ?? null
 }
 
 /**

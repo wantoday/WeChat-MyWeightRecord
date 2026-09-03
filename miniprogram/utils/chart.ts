@@ -25,7 +25,7 @@ const PADDING = { top: 20, right: 16, bottom: 28, left: 40 }
 const BRAND = '#07c160'
 
 export function drawWeightChart(
-  ctx: WechatMiniprogram.CanvasContext,
+  ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D,
   opts: DrawOptions
 ): void {
   const { width, height, points, targetWeight = 0 } = opts

@@ -1,0 +1,15 @@
+{
+  "name": "weight-record",
+  "version": "0.1.0",
+  "private": true,
+  "description": "体重记录微信小程序（原生小程序 + TypeScript + 微信云开发）",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^5.2.3",
+    "typescript": "^5.4.5",
+    "vitest": "^5.0.0"
+  }
+}

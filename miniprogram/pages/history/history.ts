@@ -94,7 +94,7 @@ Page({
     })
   },
 
-  async onTapRow(e: WechatMiniprogram.TapEvent): Promise<void> {
+  async onTapRow(e: WechatMiniprogram.CustomEvent): Promise<void> {
     const { date, weight } = e.currentTarget.dataset
     const res = await wx.showModal({
       title: `修改 ${toFriendlyLabel(date)}`,
@@ -120,7 +120,7 @@ Page({
     }
   },
 
-  async onLongPressRow(e: WechatMiniprogram.TapEvent): Promise<void> {
+  async onLongPressRow(e: WechatMiniprogram.CustomEvent): Promise<void> {
     const { id, date } = e.currentTarget.dataset
     const res = await wx.showModal({
       title: '删除记录',

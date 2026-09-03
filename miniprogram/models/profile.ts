@@ -39,13 +39,14 @@ async function loadOrCreate(): Promise<UserProfile> {
   const found = res.data[0]
   if (found) {
     // 兼容旧文档缺字段的情况：读取处兜默认值，不做数据库迁移
-    return { ...DEFAULTS, ...found }
+    // _id 在官方类型里是 string | number，统一转成 string 供 doc() 使用
+    return { ...DEFAULTS, ...found, _id: String(found._id ?? '') }
   }
 
   const now = Date.now()
   const data = { ...DEFAULTS, updatedAt: now }
   const added = await profileCol().add({ data })
-  return { ...data, _id: added._id }
+  return { ...data, _id: String(added._id) }
 }
 
 /** 局部更新档案。会自动刷新 updatedAt。 */

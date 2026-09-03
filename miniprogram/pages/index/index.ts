@@ -91,7 +91,7 @@ Page({
     return `比 ${toFriendlyLabel(prev.date)} ${verb} ${Math.abs(delta)}kg`
   },
 
-  onInput(e: WechatMiniprogram.InputEvent) {
+  onInput(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
     this.setData({ input: e.detail.value })
   },
 

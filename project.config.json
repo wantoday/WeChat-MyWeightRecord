@@ -1,5 +1,5 @@
 {
-  "appid": "touristappid",
+  "appid": "wx3f4e122a02cadac0",
   "compileType": "miniprogram",
   "libVersion": "3.5.5",
   "projectname": "WeightRecord",
@@ -16,7 +16,26 @@
     ],
     "ignoreUploadUnusedFiles": true,
     "packNpmManually": false,
-    "packNpmRelationList": []
+    "packNpmRelationList": [],
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

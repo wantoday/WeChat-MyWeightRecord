@@ -103,7 +103,7 @@ Page({
     void this.editNumber('targetWeight', '目标体重', '输入目标体重 kg', 20, 300)
   },
 
-  async onToggleReminder(e: WechatMiniprogram.SwitchEvent): Promise<void> {
+  async onToggleReminder(e: WechatMiniprogram.CustomEvent<{ value: boolean }>): Promise<void> {
     const on = e.detail.value
 
     if (on && !REMINDER_TMPL_ID) {
@@ -143,7 +143,7 @@ Page({
     }
   },
 
-  async onPickHour(e: WechatMiniprogram.PickerEvent): Promise<void> {
+  async onPickHour(e: WechatMiniprogram.CustomEvent<{ value: string }>): Promise<void> {
     const hour = Number(e.detail.value)
     try {
       await saveProfile(this.data.profileId, { reminderHour: hour })

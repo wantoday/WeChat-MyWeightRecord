@@ -9,7 +9,6 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "sourceMap": true,
-    "typeRoots": ["./typings"],
     "removeComments": false
   },
   "include": ["./miniprogram/**/*.ts", "./typings/**/*.d.ts"],

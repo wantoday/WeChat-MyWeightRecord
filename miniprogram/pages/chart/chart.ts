@@ -33,7 +33,7 @@ Page({
   },
 
   /** 画布上下文与尺寸，非渲染数据所以不放 data */
-  ctx: null as WechatMiniprogram.CanvasContext | null,
+  ctx: null as WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D | null,
   cssWidth: 0,
   cssHeight: 0,
   points: [] as ChartPoint[],
@@ -125,7 +125,7 @@ Page({
     })
   },
 
-  onRangeTap(e: WechatMiniprogram.TapEvent): void {
+  onRangeTap(e: WechatMiniprogram.CustomEvent): void {
     const key = e.currentTarget.dataset.key as ChartRange
     if (key === this.data.range) return
     this.setData({ range: key, loading: true })
