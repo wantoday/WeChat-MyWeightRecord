@@ -2,24 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-微信小程序「体重记录」：原生小程序 + TypeScript + 微信云开发，手写 WXSS，零第三方依赖。
+微信小程序「体重记录」：原生小程序 + TypeScript + 微信云开发，手写 WXSS，**运行时零第三方依赖**（`typescript` / `vitest` / `miniprogram-api-typings` 都是 devDependencies，仅用于类型检查与测试）。
 
 ## 构建与验证
 
-**本机没有 node/npm，也没装微信开发者工具** —— 没有可用的命令行构建、lint 或测试链路。改完代码无法在本机验证，只能靠类型正确性和代码审查。不要凭空写出 `npm run build` 之类的命令。
-
-TS 编译由开发者工具的编译插件负责（`project.config.json` → `setting.useCompilerPlugins: ["typescript"]`），工具自带 Node 运行时，因此**刻意不引入 npm 依赖**。编译产物 `.js` / `.js.map` 生成在 `.ts` 同目录，已 gitignore。
-
-若之后装了 node，唯一有价值的检查是类型：
+**本机已装 node v22 + npm 10**，但没装微信开发者工具。命令行动作如下，改完代码必须跑通再交付：
 
 ```bash
-npm i -D typescript
-npx tsc --noEmit          # 按仓库根 tsconfig.json 检查 miniprogram/ 下全部 TS
+npm run typecheck       # tsc --noEmit，按仓库根 tsconfig.json 检查 miniprogram/ 下全部 TS
+npm test                # vitest，当前覆盖 tests/ 下 date/bmi 纯函数单测
 ```
 
-`tsconfig.json` 开了 `strict` + `noUnusedLocals`，多留一个未使用的 import 就编译不过。`typeRoots` 只指向 `./typings`；`cloudfunctions/` 在 `exclude` 里，**云函数完全不受类型检查** —— 它是给云端 Node 跑的 plain CommonJS（`require` / `exports.main`），不要在里面写 TS 语法或 ESM import。
+TS 编译仍由开发者工具的编译插件负责（`project.config.json` → `setting.useCompilerPlugins: ["typescript"]`），工具自带 Node 运行时，因此运行时**不引入 npm 依赖**。编译产物 `.js` / `.js.map` 生成在 `.ts` 同目录，已 gitignore。`node_modules` 位于 OneDrive 目录内，注意别让它进同步（见约束 10）。
 
-本项目没有测试。云函数部署走 GUI：右键 `cloudfunctions/remindDaily` → 「上传并部署：云端安装依赖」（`config.json` 里的定时触发器随之生效，cron `0 0 * * * * *` 是微信的 7 段秒级格式 = 每小时整点）。
+`tsconfig.json` 开了 `strict` + `noUnusedLocals`，多留一个未使用的 import 就编译不过。`cloudfunctions/` 在 `exclude` 里，**云函数完全不受类型检查** —— 它是给云端 Node 跑的 plain CommonJS（`require` / `exports.main`），不要在里面写 TS 语法或 ESM import。
+
+云函数部署走 GUI：右键 `cloudfunctions/remindDaily` → 「上传并部署：云端安装依赖」（`config.json` 里的定时触发器随之生效，cron `0 0 * * * * *` 是微信的 7 段秒级格式 = 每小时整点）。
 
 首次运行的配置步骤（环境 ID、建集合、订阅消息模板）见 `README.md`，不在此重复。
 
@@ -58,7 +56,7 @@ pages/*  →  models/{record,profile}  →  models/db  →  云数据库
 
    改 `.chart-canvas` 的高度要回头确认 `utils/chart.ts` 里 `PADDING` 还够用。
 
-6. **wx API 类型是手写的**（`typings/wx.d.ts`），只覆盖本项目用到的部分。用到新 API 时**去补声明**，不要 `(wx as any)` 绕过 —— 那等于放弃了这里唯一的静态检查手段。装了 npm 后可换成官方 `miniprogram-api-typings` 并删掉该文件。
+6. **wx API 类型用官方 `miniprogram-api-typings`**（通过 `typings/global.d.ts` 的 `/// <reference types="miniprogram-api-typings" />` 引入，包在 devDependencies）。用到新 API 时**不要 `(wx as any)` 绕过** —— 那等于放弃了静态检查手段。注意官方类型与本项目模型的差异：数据库查询返回 `IDocumentData`（读取处断言成 `WeightRecord`，见 `models/record.ts`）；`_id` 是 `string | number`（读取处用 `String()` 归一，见 `models/profile.ts`）；事件类型只有 `CustomEvent<Detail>`（手写时的 `TapEvent`/`InputEvent`/`SwitchEvent`/`PickerEvent` 别名已不存在，页面里直接标 `WechatMiniprogram.CustomEvent<...>`）。
 
 7. **不要用路径别名**（`@/foo`）。小程序运行时按相对路径 `require`，编译插件不做路径重写，别名会在运行时找不到模块。全部用相对路径。
 
@@ -88,4 +86,4 @@ git 已初始化，分支 `main`，目前只有一个提交（骨架）。工作
 
 AppID 已填真实值（不再是 README 里写的 `touristappid`，README 这段没更新）。
 
-**代码的运行状况未经本机验证** —— 本机既无 node 也无微信开发者工具（已确认不在 `Program Files*` / `%LOCALAPPDATA%\Programs` / 卸载注册表里）。项目已在**某台**装了工具的机器上打开过（`project.private.config.json` 存在，`libVersion` 3.17.2，与 `project.config.json` 里的 3.5.5 不一致），但没有证据表明编译通过或功能跑通过。首次编译时预期要修一些类型或配置上的小问题；`typings/wx.d.ts` 是手写的、只覆盖用到的 API，最可能是问题来源。
+**代码的运行状况未经真机/开发者工具验证** —— 本机有 node/npm（typecheck 与测试可跑），但没装微信开发者工具。项目已在**某台**装了工具的机器上打开过（`project.private.config.json` 存在，`libVersion` 3.17.2，与 `project.config.json` 里的 3.5.5 不一致），但没有证据表明编译通过或功能跑通过。类型层已换成官方 `miniprogram-api-typings` 并通过 `npm run typecheck`（0 错误）；云数据库与 Canvas 渲染等运行时行为仍需在装有开发者工具 + 云环境的机器上走查。

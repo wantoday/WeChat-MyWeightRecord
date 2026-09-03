@@ -15,7 +15,7 @@
 
 ## 跑起来
 
-需要先装 [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)。本项目不需要 node/npm。
+需要先装 [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)。运行时不需要 node/npm；node/npm 仅用于开发工具链（`npm install` 后可用 `npm run typecheck` 做类型检查、`npm test` 跑单测）。
 
 1. **导入项目** —— 开发者工具 → 导入项目，目录选仓库根目录。`project.config.json` 里 `appid` 是 `touristappid`（游客模式）；有自己的 AppID 就换掉，**云开发必须用真实 AppID**。
 
@@ -58,5 +58,5 @@ miniprogram/
   utils/             纯函数：date / bmi / chart(绘图)
 cloudfunctions/
   remindDaily/       定时提醒
-typings/wx.d.ts      手写的小程序 API 类型声明（因为不装 npm）
+typings/global.d.ts  引入官方 miniprogram-api-typings 的全局类型入口
 ```
