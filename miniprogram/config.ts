@@ -1,11 +1,24 @@
 /**
  * 全局配置。
  *
- * CLOUD_ENV_ID 必须替换成你自己的云开发环境 ID，否则所有数据库调用都会失败。
- * 获取方式：微信开发者工具 → 顶部「云开发」→ 环境设置 → 环境 ID。
+ * 两种数据存储方式，由 USE_LOCAL_SERVER 切换：
+ *  - true  ：数据直传本地电脑（见 local-server/README.md），无需开通云开发；
+ *  - false ：使用微信云开发，此时 CLOUD_ENV_ID 必须替换成你自己的环境 ID，
+ *            否则所有数据库调用都会失败（errCode -601034）。
+ * 环境 ID 获取方式：微信开发者工具 → 顶部「云开发」→ 环境设置 → 环境 ID。
  */
 
-/** 云开发环境 ID。'' 表示未配置，app.ts 会在启动时报错提示。 */
+/** 本地模式开关：true = 数据直传本地电脑；false = 微信云开发 */
+export const USE_LOCAL_SERVER = true
+
+/**
+ * 本地服务地址。
+ * 模拟器用 127.0.0.1 即可；真机预览改成电脑的局域网 IP（ipconfig 查看），
+ * 手机需与电脑同一 Wi-Fi。
+ */
+export const LOCAL_SERVER_URL = 'http://127.0.0.1:8765'
+
+/** 云开发环境 ID。USE_LOCAL_SERVER=false 时必填。 */
 export const CLOUD_ENV_ID = 'cloud1-d2gtj3uab09610477'
 
 /** 云数据库集合名 */

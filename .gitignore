@@ -10,6 +10,9 @@ node_modules/
 cloudfunctions/*/node_modules/
 miniprogram_npm/
 
+# 本地数据服务的运行时数据（打卡记录、个人档案），不进版本库
+local-server/data/
+
 # Claude Code 的本地权限设置，属于个人配置不共享。
 # 这条目前也被 ~/.config/git/ignore 全局忽略，但那是本机才有的规则，
 # 写进仓库才能保证 clone 到别处也不会误提交。共享设置应放 .claude/settings.json。

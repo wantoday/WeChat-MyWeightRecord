@@ -1,8 +1,12 @@
+import { USE_LOCAL_SERVER } from '../config'
 import { profileCol } from './db'
+import { httpGet, httpPost } from './http'
 import type { UserProfile } from './types'
 
 /**
- * 用户档案访问层。每个 _openid 一条文档；首次读取时若不存在则自动建默认档案。
+ * 用户档案访问层。
+ *  - 本地模式：服务端维护全局唯一一份档案（首次读取自动建默认档案）；
+ *  - 云开发模式：每个 _openid 一条文档；首次读取时若不存在则自动建默认档案。
  */
 
 const DEFAULTS: Omit<UserProfile, '_id' | '_openid'> = {
@@ -34,6 +38,9 @@ export function ensureProfile(): Promise<UserProfile> {
 }
 
 async function loadOrCreate(): Promise<UserProfile> {
+  if (USE_LOCAL_SERVER) {
+    return httpGet<UserProfile>('/api/profile')
+  }
   // orderBy 把「已有多条时读哪条」定下来，否则不同页面可能读到不同档案
   const res = await profileCol().orderBy('_id', 'asc').limit(1).get()
   const found = res.data[0]
@@ -54,6 +61,10 @@ export async function saveProfile(
   id: string,
   patch: Partial<Omit<UserProfile, '_id' | '_openid'>>
 ): Promise<void> {
+  if (USE_LOCAL_SERVER) {
+    await httpPost('/api/profile', patch)
+    return
+  }
   await profileCol().doc(id).update({
     data: { ...patch, updatedAt: Date.now() },
   })

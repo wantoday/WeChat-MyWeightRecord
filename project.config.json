@@ -1,12 +1,12 @@
 {
-  "appid": "wx3f4e122a02cadac0",
+  "appid": "wxb93e5c3149f18797",
   "compileType": "miniprogram",
   "libVersion": "3.5.5",
   "projectname": "WeightRecord",
   "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "es6": true,
     "enhance": true,
     "postcss": true,
@@ -37,5 +37,6 @@
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "isGameTourist": false
 }
