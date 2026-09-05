@@ -109,4 +109,4 @@ pages/*  →  models/{record,profile}  →  models/http  →  local-server/serve
 - **未在微信开发者工具 / 真机上验证过**：`wx.request` 打本地服务、Canvas 渲染、tabBar 切换刷新这些运行时行为，只有装了开发者工具的机器能走查。本机没装。
 - 开发者工具的 `libVersion` 两份配置不一致（`project.config.json` 3.5.5 vs `project.private.config.json` 3.17.2）。
 
-**`WeightRecord-问题分析报告.html`（未跟踪）已严重过期，不要照着它改。** 它是早前某次会话生成的诊断报告，通篇假设项目跑在微信云开发上，列的「阻断级问题」（缺云环境 ID、缺订阅模板、`console` 未声明、0 测试）现在全都不成立。当历史快照看，别当待办清单。
+**遇到早期会话产出的诊断报告（如仓库根目录下的 `WeightRecord-问题分析报告.html`，未跟踪、可能已被清掉）不要照着改。** 那类报告通篇假设项目跑在微信云开发上，列的「阻断级问题」（缺云环境 ID、缺订阅模板、`console` 未声明、0 测试）现在全都不成立。当历史快照看，别当待办清单。
