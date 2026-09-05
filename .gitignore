@@ -7,7 +7,6 @@ miniprogram/**/*.js.map
 
 # 依赖（本项目默认不需要，装了也不要提交 / 不要让 OneDrive 同步）
 node_modules/
-cloudfunctions/*/node_modules/
 miniprogram_npm/
 
 # 本地数据服务的运行时数据（打卡记录、个人档案），不进版本库

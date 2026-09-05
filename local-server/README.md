@@ -32,7 +32,18 @@
 | POST | /api/profile | 合并更新档案 |
 | GET | /api/export.csv | 导出全部记录为 CSV |
 
-## 和云开发的关系
+## 约定
 
-`miniprogram/config.ts` 里 `USE_LOCAL_SERVER = true` 表示走本地服务；
-改成 `false` 并填好 `CLOUD_ENV_ID`（开通云开发后）即切回云端，两套代码都保留。
+- **每天一条**：`POST /api/records` 按 `date` 查重，同一天再写是覆盖而不是新增。这是整个 App 的核心不变量。
+- **只改体重不会清掉备注**：请求体里不带 `note` 字段时，服务端保留原有备注；要清空得显式传 `note: ""`。
+- **体重区间 20–300kg**：与 `miniprogram/config.ts` 的 `WEIGHT_RANGE` 保持一致，改一处要改两处（本文件是 plain CommonJS，没法 import 那边的 TS）。
+- **档案只有一份**（`_id: profile_local`），单人使用，不做多用户隔离。
+
+## 环境变量
+
+| 变量 | 作用 |
+|---|---|
+| `PORT` | 覆盖监听端口（默认 8765） |
+| `WR_DATA_DIR` | 覆盖数据目录，单测用它指向临时目录，避免碰到真实数据 |
+
+被 `require` 时（如单测）不会自动监听端口，只导出 `{ server, start }`，由调用方决定端口。

@@ -1,15 +1,9 @@
 /**
- * 全局配置。
+ * 全局配置 —— 唯一的配置出口，新增可配置项加在这里，不要散落到页面。
  *
- * 两种数据存储方式，由 USE_LOCAL_SERVER 切换：
- *  - true  ：数据直传本地电脑（见 local-server/README.md），无需开通云开发；
- *  - false ：使用微信云开发，此时 CLOUD_ENV_ID 必须替换成你自己的环境 ID，
- *            否则所有数据库调用都会失败（errCode -601034）。
- * 环境 ID 获取方式：微信开发者工具 → 顶部「云开发」→ 环境设置 → 环境 ID。
+ * 数据存在你自己的电脑上：小程序通过 HTTP 直连 local-server
+ * （见 local-server/README.md），不使用微信云开发。
  */
-
-/** 本地模式开关：true = 数据直传本地电脑；false = 微信云开发 */
-export const USE_LOCAL_SERVER = true
 
 /**
  * 本地服务地址。
@@ -18,22 +12,21 @@ export const USE_LOCAL_SERVER = true
  */
 export const LOCAL_SERVER_URL = 'http://127.0.0.1:8765'
 
-/** 云开发环境 ID。USE_LOCAL_SERVER=false 时必填。 */
-export const CLOUD_ENV_ID = 'cloud1-d2gtj3uab09610477'
+/** 单次请求超时（ms）。本地服务在同一台机器上，超过这个时间基本就是没启动。 */
+export const REQUEST_TIMEOUT = 5000
 
-/** 云数据库集合名 */
-export const COLLECTION = {
-  /** 体重记录，每个用户每天最多一条（date 字段唯一） */
-  records: 'weight_records',
-  /** 用户档案：身高、目标体重、提醒设置，每个用户一条 */
-  profile: 'user_profile',
-} as const
-
-/** 订阅消息模板 ID（每日提醒用）。在小程序后台「订阅消息」里申请后填入。 */
-export const REMINDER_TMPL_ID = ''
-
-/** 小程序端单次 collection.get() 最多返回 20 条，分页步长与之对齐 */
+/** 历史列表分页步长 */
 export const PAGE_SIZE = 20
+
+/**
+ * 体重合法区间（kg）。区间之外几乎必然是误输入（少打小数点、多打一位）。
+ * local-server/server.js 里有一份同值的校验 —— 它是 plain CommonJS，
+ * 没法 import 本文件，改这里记得同步过去。
+ */
+export const WEIGHT_RANGE = { min: 20, max: 300 } as const
+
+/** 身高合法区间（cm） */
+export const HEIGHT_RANGE = { min: 100, max: 250 } as const
 
 /** BMI 分级阈值（中国成人标准，与 WHO 标准不同） */
 export const BMI_THRESHOLDS = {

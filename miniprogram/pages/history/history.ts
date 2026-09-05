@@ -1,4 +1,4 @@
-import { PAGE_SIZE } from '../../config'
+import { PAGE_SIZE, WEIGHT_RANGE } from '../../config'
 import * as records from '../../models/record'
 import type { WeightRecord } from '../../models/types'
 import { toFriendlyLabel } from '../../utils/date'
@@ -105,8 +105,8 @@ Page({
     if (!res.confirm) return
 
     const next = Number(res.content)
-    if (!next || Number.isNaN(next) || next < 20 || next > 300) {
-      wx.showToast({ title: '请输入 20-300 之间的体重', icon: 'none' })
+    if (!next || Number.isNaN(next) || next < WEIGHT_RANGE.min || next > WEIGHT_RANGE.max) {
+      wx.showToast({ title: `请输入 ${WEIGHT_RANGE.min}-${WEIGHT_RANGE.max} 之间的体重`, icon: 'none' })
       return
     }
 

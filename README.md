@@ -2,7 +2,9 @@
 
 微信小程序，用来每天记一次体重，看趋势、算 BMI、追目标。
 
-技术栈：原生小程序 + TypeScript + 微信云开发，手写 WXSS，无第三方依赖。
+**数据存在你自己的电脑上** —— 小程序通过 HTTP 直连本机跑的 `local-server`，不使用微信云开发，也不需要开通任何云服务。记录落盘成 `local-server/data/records.json`，随时能用文本编辑器或 Excel 打开。
+
+技术栈：原生小程序 + TypeScript，手写 WXSS，运行时无第三方依赖；本地服务是零依赖的单文件 Node 脚本。
 
 ## 功能
 
@@ -11,52 +13,60 @@
 | 打卡 | 录入今天的体重，显示与上次的增减、BMI、目标完成度 |
 | 趋势 | 近 7 天 / 近 30 天 / 全部的折线图，含目标参考线与区间统计 |
 | 记录 | 倒序分页列表，点击改、长按删 |
-| 我的 | 身高、目标体重、每日提醒开关与时间 |
+| 我的 | 身高、目标体重、累计记录数 |
 
 ## 跑起来
 
-需要先装 [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)。运行时不需要 node/npm；node/npm 仅用于开发工具链（`npm install` 后可用 `npm run typecheck` 做类型检查、`npm test` 跑单测）。
+需要 [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html) 和 [Node.js](https://nodejs.org/)（本地数据服务靠它跑）。
 
-1. **导入项目** —— 开发者工具 → 导入项目，目录选仓库根目录。`project.config.json` 里 `appid` 是 `touristappid`（游客模式）；有自己的 AppID 就换掉，**云开发必须用真实 AppID**。
+1. **启动本地数据服务** —— 双击 `local-server/start-server.bat`，或命令行：
 
-2. **开通云开发** —— 工具顶部「云开发」→ 开通 → 记下环境 ID。
+   ```bash
+   node local-server/server.js
+   ```
 
-3. **填环境 ID** —— 把环境 ID 写进 `miniprogram/config.ts` 的 `CLOUD_ENV_ID`。没填的话启动时会直接弹窗提示。
+   看到「本地数据服务已启动」即可，保持窗口开着。首次启动会自动建 `local-server/data/`。
 
-4. **建数据库集合** —— 云开发控制台 → 数据库，新建两个集合：
+2. **导入项目** —— 开发者工具 → 导入项目，目录选仓库根目录。
 
-   | 集合 | 权限 |
-   |---|---|
-   | `weight_records` | 仅创建者可读写 |
-   | `user_profile` | 仅创建者可读写 |
+3. **编译运行** —— 模拟器直接用默认地址 `http://127.0.0.1:8765`，无需改动。项目已设置「不校验合法域名」（`project.config.json` 的 `setting.urlCheck: false`），本地 HTTP 请求不会被拦。
 
-   权限必须选「仅创建者可读写」，否则用户能读到别人的体重。
+   服务没启动时，小程序启动就会弹窗提示，不会让你对着空白页猜。
 
-5. **编译运行** —— 此时打卡、趋势、记录、身高/目标都可用。
+4. **真机预览**（可选）—— 手机和电脑连同一个 Wi-Fi，把 `miniprogram/config.ts` 的 `LOCAL_SERVER_URL` 改成电脑的局域网 IP（`ipconfig` 查看），如 `http://192.168.1.5:8765`，再用「预览」生成开发版二维码。手机连不上就看看 Windows 防火墙有没有放行 Node。
 
-## 每日提醒（可选）
+## 数据怎么看、怎么导出
 
-提醒依赖订阅消息 + 定时云函数，比上面几步麻烦，不配也不影响其它功能：
+- 记录文件：`local-server/data/records.json`（每天一条，按日期升序）
+- 档案文件：`local-server/data/profile.json`（身高、目标体重）
+- 导出 Excel：浏览器打开 <http://127.0.0.1:8765/api/export.csv>，或 `curl http://127.0.0.1:8765/api/export.csv -o records.csv`（带 BOM，Excel 打开不乱码）
 
-1. 小程序后台 → 订阅消息 → 申请一个模板（关键词类似「提醒事项」+「提醒时间」），拿到模板 ID。
-2. 模板 ID 填两处，必须一致：
-   - `miniprogram/config.ts` 的 `REMINDER_TMPL_ID`
-   - `cloudfunctions/remindDaily/index.js` 的 `TMPL_ID`
-3. 核对 `index.js` 里 `data` 的字段名（`thing1` / `time2`）与你申请到的模板一致，不一致微信会报 `47003`。
-4. 右键 `cloudfunctions/remindDaily` → 「上传并部署：云端安装依赖」。`config.json` 里的定时触发器会一起生效（每小时整点跑，函数内筛选到点的用户）。
+完整 API 见 `local-server/README.md`。
 
-已知限制：这里用的是**一次性订阅**，用户授权一次只能收到一条推送。要做到长期每天提醒，需要在小程序后台申请「长期订阅」权限（仅部分服务类目开放）。
+## 开发
+
+node/npm 只用于工具链，小程序运行时不依赖它们。
+
+```bash
+npm install
+npm run typecheck                    # tsc --noEmit
+npm test                             # vitest：本地服务端到端 + 数据层 + 纯函数
+npx vitest run tests/server.test.ts  # 只跑某个文件
+npx vitest run -t "每天一条"          # 按用例名过滤
+```
 
 ## 目录
 
 ```
 miniprogram/
-  config.ts          全部可配置项集中在这里
-  app.ts             云开发初始化
+  config.ts          全部可配置项集中在这里（服务地址、体重/身高区间、BMI 阈值）
+  app.ts             启动时探一次本地服务健康检查
   pages/             index(打卡) / chart(趋势) / history(记录) / profile(我的)
-  models/            数据访问层：db / record / profile / types
+  models/            数据访问层：http / record / profile / types
   utils/             纯函数：date / bmi / chart(绘图)
-cloudfunctions/
-  remindDaily/       定时提醒
+local-server/
+  server.js          零依赖 Node HTTP 服务，数据落盘在 data/（已 gitignore）
+  start-server.bat   双击启动
+tests/               vitest：server(端到端) / record(数据层) / date / bmi
 typings/global.d.ts  引入官方 miniprogram-api-typings 的全局类型入口
 ```

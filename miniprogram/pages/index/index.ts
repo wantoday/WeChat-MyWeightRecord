@@ -1,3 +1,4 @@
+import { WEIGHT_RANGE } from '../../config'
 import { ensureProfile } from '../../models/profile'
 import * as records from '../../models/record'
 import type { BmiResult } from '../../models/types'
@@ -70,7 +71,7 @@ Page({
     } catch (err) {
       this.setData({ loading: false })
       console.error('[index] refresh failed', err)
-      wx.showToast({ title: '加载失败，请检查云环境配置', icon: 'none', duration: 2500 })
+      wx.showToast({ title: '加载失败，请确认本地服务已启动', icon: 'none', duration: 2500 })
     }
   },
 
@@ -96,15 +97,15 @@ Page({
   },
 
   async onSave(): Promise<void> {
-    // 必须挡住重入：upsertByDate 是「先查后写」，请求还在飞的时候再点一次，
-    // 两次都会查到当天无记录、各自 add 一条，直接破坏「每天一条」不变量。
-    // 按钮是个 view，saving 只改了样式，光靠 UI 拦不住连点。
+    // 挡住重入：按钮是个 view，saving 只改了样式，光靠 UI 拦不住连点。
+    // 「每天一条」本身由服务端按 date 查重保证，但连点会发两次请求、弹两次 toast，
+    // 而且第二次的 refresh 可能先于第一次返回，把界面刷成中间态。
     if (this.data.saving) return
 
     const weight = Number(this.data.input)
-    // 20-300kg 之外几乎必然是误输入（少打小数点、多打一位）
-    if (!weight || Number.isNaN(weight) || weight < 20 || weight > 300) {
-      wx.showToast({ title: '请输入 20-300 之间的体重', icon: 'none' })
+    // 合法区间之外几乎必然是误输入（少打小数点、多打一位）
+    if (!weight || Number.isNaN(weight) || weight < WEIGHT_RANGE.min || weight > WEIGHT_RANGE.max) {
+      wx.showToast({ title: `请输入 ${WEIGHT_RANGE.min}-${WEIGHT_RANGE.max} 之间的体重`, icon: 'none' })
       return
     }
 
