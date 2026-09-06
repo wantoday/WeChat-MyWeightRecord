@@ -40,7 +40,7 @@ TS 编译由开发者工具的编译插件负责（`project.config.json` → `se
 ```
 pages/*  →  models/{record,profile}  →  models/storage  →  微信本地存储(wx.setStorageSync)
                     ↑
-              utils/{date,bmi,chart}   ← 纯函数，无副作用、不碰 wx API（chart 只收 ctx）
+              utils/{date,bmi,chart,unit}   ← 纯函数，无副作用、不碰 wx API（chart 只收 ctx；unit 做斤↔kg 换算）
 ```
 
 - `miniprogram/config.ts` —— **唯一的配置出口**：`PAGE_SIZE`、`WEIGHT_RANGE`、`HEIGHT_RANGE`、`BMI_THRESHOLDS`。新增可配置项加在这里，不要散落到页面。

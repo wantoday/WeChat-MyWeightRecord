@@ -23,8 +23,9 @@
   font-weight: 500;
 }
 
+/* 与普通卡片一致的水平内边距：让 canvas 块和下方统计卡的内容宽度对齐 */
 .chart-card {
-  padding: 16rpx 8rpx;
+  padding: 16rpx 32rpx;
 }
 
 /* 高度写死，脚本据此按 dpr 设置位图尺寸；改这里要同步确认图表内边距够用 */
@@ -40,6 +41,9 @@
 .stats {
   display: flex;
   justify-content: space-between;
+  /* 与上方图表绘图区对齐：图表 PADDING 为 left 40px / right 16px（见 utils/chart.ts）。
+     用 px 而非 rpx，因为 canvas 尺寸按 CSS px 计算，px 才能跨屏精确对齐 */
+  padding: 0 16px 0 40px;
 }
 
 .stat {

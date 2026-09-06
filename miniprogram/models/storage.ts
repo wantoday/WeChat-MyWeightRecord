@@ -1,5 +1,5 @@
 import { WEIGHT_RANGE } from '../config'
-import type { UserProfile, WeightRecord } from './types'
+import type { UserProfile, WeightRecord, WeightUnit } from './types'
 
 /**
  * 手机本地存储后端 —— 替代 local-server，数据直接存在手机里。
@@ -13,6 +13,7 @@ import type { UserProfile, WeightRecord } from './types'
 
 const RECORDS_KEY = 'weight_records'
 const PROFILE_KEY = 'weight_profile'
+const UNIT_KEY = 'weight_unit'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -106,4 +107,14 @@ export function saveProfile(
   }
   wx.setStorageSync(PROFILE_KEY, next)
   return next
+}
+
+/** 读取体重单位偏好，默认斤（打卡页专用，存储仍统一 kg） */
+export function loadWeightUnit(): WeightUnit {
+  const v = wx.getStorageSync(UNIT_KEY)
+  return v === 'kg' ? 'kg' : 'jin'
+}
+
+export function saveWeightUnit(unit: WeightUnit): void {
+  wx.setStorageSync(UNIT_KEY, unit)
 }

@@ -14,7 +14,21 @@
         confirm-type="done"
         bindconfirm="onSave"
       />
-      <text class="unit">kg</text>
+      <text class="unit">{{unitLabel}}</text>
+    </view>
+
+    <!-- 单位切换：默认斤，可切 kg；存储统一 kg，仅录入/展示换算 -->
+    <view class="unit-seg">
+      <view
+        class="unit-seg-item {{unit === 'jin' ? 'is-active' : ''}}"
+        data-unit="jin"
+        bindtap="onUnitTap"
+      >斤</view>
+      <view
+        class="unit-seg-item {{unit === 'kg' ? 'is-active' : ''}}"
+        data-unit="kg"
+        bindtap="onUnitTap"
+      >kg</view>
     </view>
 
     <view class="delta" wx:if="{{deltaText}}">{{deltaText}}</view>
@@ -41,7 +55,7 @@
 
   <!-- 目标进度 -->
   <view class="card" wx:if="{{targetWeight}}">
-    <view class="card-title">目标 {{targetWeight}}kg</view>
+    <view class="card-title">目标 {{targetText}}</view>
     <view class="bar">
       <view class="bar-fill" style="width:{{progress}}%"></view>
     </view>

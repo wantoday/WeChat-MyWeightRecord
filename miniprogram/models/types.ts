@@ -28,6 +28,9 @@ export interface UserProfile {
   updatedAt: number
 }
 
+/** 体重录入/展示单位：存储统一用 kg，斤仅用于打卡页的录入与展示换算 */
+export type WeightUnit = 'jin' | 'kg'
+
 /** BMI 分级 */
 export type BmiLevel = 'underweight' | 'normal' | 'overweight' | 'obese'
 
