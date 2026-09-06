@@ -67,6 +67,13 @@ describe('读取', () => {
     expect(await record.getByDate('2026-07-01')).toBeNull()
   })
 
+  it('getBefore 返回所选日期之前最近一条，无则 null', async () => {
+    expect((await record.getBefore('2026-09-01'))?.date).toBe('2026-08-31')
+    expect((await record.getBefore('2026-09-03'))?.date).toBe('2026-09-02')
+    expect(await record.getBefore('2026-08-30')).toBeNull()
+    expect(await record.getBefore('2026-07-01')).toBeNull()
+  })
+
   it('countRecords 返回全部条数', async () => {
     expect(await record.countRecords()).toBe(4)
   })

@@ -8,23 +8,28 @@ import { toFriendlyLabel, todayStr } from '../../utils/date'
 import { formatWeight, fromKg, roundKgForStore, toKg, unitLabel } from '../../utils/unit'
 
 /**
- * 打卡页：录入今天的体重，并汇总 BMI / 目标进度 / 与上次的变化。
+ * 打卡页：录入体重，并汇总 BMI / 目标进度 / 与上次的变化。
  *
+ * 日期：默认今天；可通过日期选择器改到历史日期做「补登记」（不允许未来日期）。
  * 单位：默认「斤」，可在录入卡手动切到 kg。存储统一用 kg，
  * 只在录入（toKg）和展示（fromKg/formatWeight）时换算，避免污染数据层。
  *
  * 数据在 onShow 而非 onLoad 里刷新 —— 从「我的」改完身高或从「记录」删掉记录后
- * 切回本页，必须重算。
+ * 切回本页，必须重算。选过的补登记日期会保留，不会每次切回都弹回今天。
  */
 Page({
   data: {
     loading: true,
-    /** 当前录入的日期，固定为今天 */
+    /** 当前录入的日期（'YYYY-MM-DD'），默认今天；可选历史日期补登记 */
     date: '',
+    /** 日期选择器可选的最大日期 = 今天，禁止未来日期 */
+    maxDate: '',
     dateLabel: '',
+    /** 今天 → '改期'；补登记日期 → '补登记 · 改期' */
+    dateHint: '',
     /** 输入框里的字符串。用 string 而非 number：需要允许中间态如 '65.' */
     input: '',
-    /** 已保存的今日体重（kg），0 表示今天还没打卡 */
+    /** 所选日期的记录体重（kg），0 表示该日期还没有记录 */
     savedWeight: 0,
     /** 单位（存储偏好，默认斤） */
     unit: 'jin' as WeightUnit,
@@ -54,22 +59,28 @@ Page({
   },
 
   async refresh(): Promise<void> {
-    const date = todayStr()
-    this.setData({ date, dateLabel: toFriendlyLabel(date) })
+    const maxDate = todayStr()
+    // 保留用户选过的补登记日期；首次进入默认今天
+    const date = this.data.date || maxDate
+    this.setData({
+      date,
+      maxDate,
+      dateLabel: toFriendlyLabel(date),
+      dateHint: date === maxDate ? '改期' : '补登记 · 改期',
+    })
 
     try {
-      // 取最近两条：用于判断今天有没有打卡，以及和「上一次」做对比
-      const [profile, recent, earliest] = await Promise.all([
+      // 取所选日期当天的记录、早于它的最近一条（参考/差值对比）、最早一条（进度起点）
+      const [profile, rec, prev, earliest] = await Promise.all([
         ensureProfile(),
-        records.listPage(0, 2),
+        records.getByDate(date),
+        records.getBefore(date),
         records.getEarliest(),
       ])
 
-      const isToday = recent[0]?.date === date
-      const savedWeight = isToday ? recent[0].weight : 0
-      const prev = isToday ? recent[1] : recent[0]
-      // 当前体重：优先今天的；没打卡就用最近一条，好让 BMI / 进度仍有意义
-      const current = savedWeight || recent[0]?.weight || 0
+      const savedWeight = rec?.weight ?? 0
+      // 当前体重：优先所选日期的记录；没有则用早于它的最近一条，好让 BMI / 进度仍有意义
+      const current = rec?.weight ?? prev?.weight ?? 0
       const unit = loadWeightUnit()
 
       this.setData({
@@ -96,9 +107,17 @@ Page({
     }
   },
 
+  /** 改期：选历史日期补登记；选完按新日期重新取数 */
+  onDateChange(e: WechatMiniprogram.CustomEvent<{ value: string }>) {
+    const date = e.detail.value
+    if (date === this.data.date) return
+    this.setData({ date, dateLabel: toFriendlyLabel(date) })
+    void this.refresh()
+  },
+
   /**
    * 拼「与上次相比」的文案，按传入单位展示。
-   * 今天已打卡 → 和 prev 比出增减；今天没打卡 → 只报最近一次的值。
+   * 所选日期有记录 → 和 prev 比出增减；没有 → 只报最近一次的值。
    */
   buildDeltaText(
     savedWeight: number,

@@ -2,7 +2,13 @@
 
   <!-- 录入卡片 -->
   <view class="card entry">
-    <view class="card-title">{{dateLabel}}的体重</view>
+    <!-- 日期选择：默认今天，可改到历史日期补登记（picker end 限制今天，禁未来） -->
+    <picker mode="date" value="{{date}}" end="{{maxDate}}" bindchange="onDateChange">
+      <view class="date-picker">
+        <text class="date-picker-label">{{dateLabel}}的体重</text>
+        <text class="date-picker-hint">{{dateHint}}</text>
+      </view>
+    </picker>
 
     <view class="entry-input">
       <input

@@ -33,6 +33,17 @@ export async function getByDate(date: string): Promise<WeightRecord | null> {
   return all.find((r) => r.date === date) ?? null
 }
 
+/** 指定日期之前最近一条记录（严格早于 date），无则 null。补登记时用作参考与差值对比。 */
+export async function getBefore(date: string): Promise<WeightRecord | null> {
+  const all = store.loadRecords()
+  let prev: WeightRecord | null = null
+  for (const r of all) {
+    if (r.date >= date) break
+    prev = r
+  }
+  return prev
+}
+
 /** 最新一条（日期最大），无则 null */
 export async function getLatest(): Promise<WeightRecord | null> {
   const all = store.loadRecords()
