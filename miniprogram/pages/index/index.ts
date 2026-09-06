@@ -71,7 +71,7 @@ Page({
     } catch (err) {
       this.setData({ loading: false })
       console.error('[index] refresh failed', err)
-      wx.showToast({ title: '加载失败，请确认本地服务已启动', icon: 'none', duration: 2500 })
+      wx.showToast({ title: '加载失败，请重试', icon: 'none', duration: 2500 })
     }
   },
 

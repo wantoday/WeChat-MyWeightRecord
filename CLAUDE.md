@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 微信小程序「体重记录」：原生小程序 + TypeScript，手写 WXSS，**运行时零第三方依赖**（`typescript` / `vitest` / `miniprogram-api-typings` 都是 devDependencies，仅用于类型检查与测试）。
 
-**数据存在用户自己的电脑上**：小程序通过 HTTP 直连本机跑的 `local-server`（零依赖单文件 Node 脚本），记录落盘成 `local-server/data/*.json`。**微信云开发相关代码已全部删除** —— 没有 `wx.cloud`、没有云数据库、没有云函数、没有订阅消息提醒。看到旧文档或旧报告提到云开发/每日提醒，那是历史信息。
+**数据存在手机本地（微信小程序本地存储）**：小程序用 `wx.setStorageSync` / `wx.getStorageSync` 读写，不依赖电脑、不依赖网络，也不需要本地服务。**本地服务方案（`local-server/`）已停用，仅保留用于把旧数据导出 CSV**。没有 `wx.cloud`、没有云数据库、没有云函数、没有订阅消息提醒。看到旧文档或旧报告提到本地服务启动流程/云开发/每日提醒，那是历史信息。
 
 ## 构建与验证
 
@@ -25,12 +25,7 @@ npx vitest run -t "每天一条"          # 按用例名过滤
 
 ⚠️ **先确认 node 在不在 PATH**。这台机器上曾经完全没装 node（`node_modules/` 是从另一台机器经 OneDrive 同步过来的，正是约束 10 警告的事），当时 `npm` / `npx` 全都 `command not found`。不在就**如实说明「本次改动未经 typecheck / 测试验证」**，不要假装跑过。
 
-跑小程序本身还需要本地服务在跑：
-
-```bash
-node local-server/server.js          # 或双击 local-server/start-server.bat
-curl http://127.0.0.1:8765/api/health
-```
+跑小程序本身**不需要**本地服务 —— 数据在手机本地存储里，编译即用。
 
 TS 编译由开发者工具的编译插件负责（`project.config.json` → `setting.useCompilerPlugins: ["typescript"]`），工具自带 Node 运行时，因此小程序运行时**不引入 npm 依赖**。编译产物 `.js` / `.js.map` 生成在 `.ts` 同目录，已 gitignore。
 
@@ -40,36 +35,34 @@ TS 编译由开发者工具的编译插件负责（`project.config.json` → `se
 
 ## 架构
 
-严格分层，**页面不直接 `wx.request`**：
+严格分层，**页面不直接碰 `wx` 存储 API**：
 
 ```
-pages/*  →  models/{record,profile}  →  models/http  →  local-server/server.js  →  data/*.json
+pages/*  →  models/{record,profile}  →  models/storage  →  微信本地存储(wx.setStorageSync)
                     ↑
               utils/{date,bmi,chart}   ← 纯函数，无副作用、不碰 wx API（chart 只收 ctx）
 ```
 
-- `miniprogram/config.ts` —— **唯一的配置出口**：`LOCAL_SERVER_URL`、`REQUEST_TIMEOUT`、`PAGE_SIZE`、`WEIGHT_RANGE`、`HEIGHT_RANGE`、`BMI_THRESHOLDS`。新增可配置项加在这里，不要散落到页面。
-- `miniprogram/models/http.ts` —— `wx.request` 的唯一封装（`httpGet` / `httpPost` / `httpDelete`），非 2xx 与网络失败都 reject 成带中文提示的 `Error`；「连不上」的提示里带地址和启动方式，因为那是最常见的故障。
-- `miniprogram/models/record.ts` / `profile.ts` —— 数据访问层，见约束 1。
-- `miniprogram/models/types.ts` —— 数据模型单一来源（`WeightRecord` / `UserProfile`），与服务端形状一致。
-- `miniprogram/app.ts` —— 启动时探一次 `/api/health`，服务没起就直接弹窗；否则表现成四个页面各自弹「加载失败」，看不出病根。
-- `local-server/server.js` —— 零依赖 HTTP 服务。JSON 落盘走「写 `.tmp` 再 rename」的原子写；记录常驻内存并整体持久化；按 `date` 唯一。`PORT` / `WR_DATA_DIR` 可用环境变量覆盖，被 `require` 时不自动监听（单测靠这个起临时实例）。
+- `miniprogram/config.ts` —— **唯一的配置出口**：`PAGE_SIZE`、`WEIGHT_RANGE`、`HEIGHT_RANGE`、`BMI_THRESHOLDS`。新增可配置项加在这里，不要散落到页面。
+- `miniprogram/models/storage.ts` —— 微信本地存储的唯一封装（`loadRecords` / `upsertRecord` / `removeRecordById` / `loadProfile` / `saveProfile`），数据校验和「每天一条」的查重都在这里。
+- `miniprogram/models/record.ts` / `profile.ts` —— 数据访问层，保持 Promise 签名，见约束 1。
+- `miniprogram/models/types.ts` —— 数据模型单一来源（`WeightRecord` / `UserProfile`）。
+- `miniprogram/app.ts` —— 只做静默更新；数据在本地，不需要健康检查。
+- `local-server/server.js` —— 遗留的零依赖 HTTP 服务（旧方案），仅 `tests/server.test.ts` 和 CSV 导出还在用它。JSON 落盘走「写 `.tmp` 再 rename」的原子写；按 `date` 唯一。`PORT` / `WR_DATA_DIR` 可用环境变量覆盖，被 `require` 时不自动监听（单测靠这个起临时实例）。
 
 ## 关键约束
 
 改动相关代码前先读这几条，它们都是踩过或刻意设计的：
 
-1. **数据层的取数策略是「一次拉全量，内存里筛」。** 每天一条，十年也才三千多条，全量传输比在本地服务上再造一套查询协议划算。三个配套机制别拆：
+1. **数据层的取数策略是「一次全量读，内存里筛」。** 每天一条，十年也才三千多条，全量处理比在存储层上再造一套查询协议划算。实现是同步的 `wx` 存储读取：
 
-   - **`inflight` 合并同一时刻的多个读**。一次 `onShow` 常同时要「最近两条」和「最早一条」（见 `pages/index`），不合并就把同一份数据拉两遍。settle 后立刻清空 —— **这不是缓存，没有陈旧问题**，下次 `onShow` 照样重新读服务端。
-   - **写成功后 `invalidate()`**，作废在飞的读，否则「写完立刻 refresh」可能读到写之前的快照。
-   - **`fetchAll()` 返回 `slice()` 副本**，调用方改动不会污染共享数组。
-
-   本地服务是明文 HTTP + 非备案域名，依赖 `project.config.json` 的 `setting.urlCheck: false`。**不要为了「规范」把它改回 true**，否则请求全被拦。
+   - 每次 `loadRecords()` 都重新从存储读一份新数组，**天然没有陈旧快照问题**，不需要旧的 `inflight` 合并 / `invalidate()` 那套网络缓存机制。
+   - `fetchAll()` 等读接口的返回值来自新数组，调用方改动不会污染后续读取。
+   - 数据访问层对外保持 **Promise 签名**（页面 `await` 调用），页面不需要关心底层是本地存储还是别的后端。
 
 2. **「每天一条记录」是核心不变量。** 所有写入路径必须经过 `record.upsertByDate()`，由服务端 `upsertRecord()` 按 `date` 查重保证。不要在页面里直接 POST。
 
-3. **改体重不带 `note` 就不发这个字段。** 服务端只在收到 `note` 时才覆盖备注 —— 这是修过的 bug：从记录页改体重时若发 `note: ''`，当天已有的备注会被静默清空。客户端和服务端两侧都有这个语义，改一侧要看另一侧（`record.upsertByDate` / `server.js` 的 `upsertRecord`），`tests/server.test.ts` 有对应用例。
+3. **改体重不带 `note` 就不改备注。** `storage.upsertRecord` 只在收到 `note` 时才覆盖备注 —— 这是修过的 bug：从记录页改体重时若传 `note: ''`，当天已有的备注会被静默清空。语义在 `storage.ts` 和遗留 `server.js` 两侧一致，改一侧要看另一侧，`tests/record.test.ts` 和 `tests/server.test.ts` 都有对应用例。
 
 4. **日期一律用 `'YYYY-MM-DD'` 字符串**，不要传 `Date` 或时间戳去做「哪一天」的比较。字典序即时间序，也免了时区问题。解析用 `utils/date.fromDateStr()`，**不要 `new Date(str)`** —— iOS 对 `-` 分隔的解析和其它平台不一致。服务端用同一个正则 `/^\d{4}-\d{2}-\d{2}$/` 校验。
 
@@ -105,8 +98,8 @@ pages/*  →  models/{record,profile}  →  models/http  →  local-server/serve
 
 **验证到哪一步了（谨慎对待，别高估）**：
 
-- `tests/` 四个文件覆盖了「打卡写入 → 落盘」的服务端全程和数据层逻辑。**跑没跑过取决于当时机器上有没有 node**，交付时以实际执行结果为准，别默认它是绿的。
-- **未在微信开发者工具 / 真机上验证过**：`wx.request` 打本地服务、Canvas 渲染、tabBar 切换刷新这些运行时行为，只有装了开发者工具的机器能走查。本机没装。
+- `tests/` 四个文件覆盖了数据层（手机本地存储）和遗留服务端的逻辑。**跑没跑过取决于当时机器上有没有 node**，交付时以实际执行结果为准，别默认它是绿的。
+- **未在微信开发者工具 / 真机上验证过**：`wx.setStorageSync` 实际读写、Canvas 渲染、tabBar 切换刷新这些运行时行为，只有装了开发者工具的机器能走查。本机没装。
 - 开发者工具的 `libVersion` 两份配置不一致（`project.config.json` 3.5.5 vs `project.private.config.json` 3.17.2）。
 
 **遇到早期会话产出的诊断报告（如仓库根目录下的 `WeightRecord-问题分析报告.html`，未跟踪、可能已被清掉）不要照着改。** 那类报告通篇假设项目跑在微信云开发上，列的「阻断级问题」（缺云环境 ID、缺订阅模板、`console` 未声明、0 测试）现在全都不成立。当历史快照看，别当待办清单。
