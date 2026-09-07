@@ -41,9 +41,8 @@
         <text class="stat-key">平均</text>
       </view>
       <view class="stat">
-        <text class="stat-value {{stat.delta < 0 ? 'is-down' : (stat.delta > 0 ? 'is-up' : '')}}">
-          {{stat.delta > 0 ? '+' : ''}}{{stat.delta}}
-        </text>
+        <!-- 必须单行书写：text 节点里的换行会被渲染出来，多行会让这一项比旁边三项高 -->
+        <text class="stat-value {{stat.delta < 0 ? 'is-down' : (stat.delta > 0 ? 'is-up' : '')}}">{{stat.delta > 0 ? '+' : ''}}{{stat.delta}}</text>
         <text class="stat-key">区间变化</text>
       </view>
     </view>
