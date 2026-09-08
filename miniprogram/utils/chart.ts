@@ -1,10 +1,15 @@
+import type { WeightUnit } from '../models/types'
 import { toShortLabel } from './date'
+import { fromKg } from './unit'
 
 /**
  * 体重折线图绘制（Canvas 2D 接口，非旧版 wx.createCanvasContext）。
  *
  * 这里只负责「给定点集，画到 ctx 上」，不碰页面状态，方便单独调整视觉。
  * 调用方需自己完成节点查询、dpr 缩放和尺寸设置（见 pages/chart/chart.ts）。
+ *
+ * 点集一律传 kg（存储单位），展示单位通过 opts.unit 指定，
+ * y 轴刻度 / 目标线 / 留白都在这里换算 —— 调用方不必先换算再传进来。
  */
 
 export interface ChartPoint {
@@ -16,9 +21,12 @@ export interface DrawOptions {
   /** CSS 像素下的绘图区尺寸（不是 canvas.width，后者已乘 dpr） */
   width: number
   height: number
+  /** 点集，weight 单位 kg */
   points: ChartPoint[]
-  /** 目标体重，>0 时画一条虚线参考线 */
+  /** 目标体重（kg），>0 时画一条虚线参考线 */
   targetWeight?: number
+  /** y 轴展示单位，默认 kg */
+  unit?: WeightUnit
 }
 
 const PADDING = { top: 20, right: 16, bottom: 28, left: 40 }
@@ -28,7 +36,7 @@ export function drawWeightChart(
   ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D,
   opts: DrawOptions
 ): void {
-  const { width, height, points, targetWeight = 0 } = opts
+  const { width, height, points, targetWeight = 0, unit = 'kg' } = opts
   ctx.clearRect(0, 0, width, height)
 
   if (points.length === 0) return
@@ -36,16 +44,22 @@ export function drawWeightChart(
   const plotW = width - PADDING.left - PADDING.right
   const plotH = height - PADDING.top - PADDING.bottom
 
+  // 全部纵向计算都在展示单位下进行（含留白与最小跨度），换算一次存成 ys
+  const ys = points.map((p) => fromKg(p.weight, unit))
+  const target = fromKg(targetWeight, unit)
+  const MARGIN = fromKg(0.5, unit)
+  const MIN_SPAN = fromKg(2, unit)
+
   // y 轴范围：数据 min/max 上下各留 0.5kg，并把目标线纳入范围，避免它被画到区域外
-  const weights = points.map((p) => p.weight)
-  if (targetWeight > 0) weights.push(targetWeight)
-  let lo = Math.min(...weights) - 0.5
-  let hi = Math.max(...weights) + 0.5
+  const weights = ys.slice()
+  if (targetWeight > 0) weights.push(target)
+  let lo = Math.min(...weights) - MARGIN
+  let hi = Math.max(...weights) + MARGIN
   // 全部数据相同时会得到零高度区间，强行撑开 2kg 免除以 0
-  if (hi - lo < 2) {
+  if (hi - lo < MIN_SPAN) {
     const mid = (hi + lo) / 2
-    lo = mid - 1
-    hi = mid + 1
+    lo = mid - MIN_SPAN / 2
+    hi = mid + MIN_SPAN / 2
   }
 
   const xOf = (i: number): number =>
@@ -78,8 +92,8 @@ export function drawWeightChart(
     ctx.setLineDash([4, 4])
     ctx.strokeStyle = '#ff9500'
     ctx.beginPath()
-    ctx.moveTo(PADDING.left, yOf(targetWeight))
-    ctx.lineTo(PADDING.left + plotW, yOf(targetWeight))
+    ctx.moveTo(PADDING.left, yOf(target))
+    ctx.lineTo(PADDING.left + plotW, yOf(target))
     ctx.stroke()
     ctx.setLineDash([])
   }
@@ -91,7 +105,7 @@ export function drawWeightChart(
   ctx.fillStyle = grad
   ctx.beginPath()
   ctx.moveTo(xOf(0), PADDING.top + plotH)
-  points.forEach((p, i) => ctx.lineTo(xOf(i), yOf(p.weight)))
+  ys.forEach((w, i) => ctx.lineTo(xOf(i), yOf(w)))
   ctx.lineTo(xOf(points.length - 1), PADDING.top + plotH)
   ctx.closePath()
   ctx.fill()
@@ -102,9 +116,9 @@ export function drawWeightChart(
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
   ctx.beginPath()
-  points.forEach((p, i) => {
+  ys.forEach((w, i) => {
     const x = xOf(i)
-    const y = yOf(p.weight)
+    const y = yOf(w)
     if (i === 0) ctx.moveTo(x, y)
     else ctx.lineTo(x, y)
   })
@@ -114,9 +128,9 @@ export function drawWeightChart(
   const showDots = points.length <= 31
   if (showDots) {
     ctx.fillStyle = '#ffffff'
-    points.forEach((p, i) => {
+    ys.forEach((w, i) => {
       ctx.beginPath()
-      ctx.arc(xOf(i), yOf(p.weight), 3, 0, Math.PI * 2)
+      ctx.arc(xOf(i), yOf(w), 3, 0, Math.PI * 2)
       ctx.fill()
       ctx.stroke()
     })
@@ -136,15 +150,18 @@ export function drawWeightChart(
   })
 }
 
-/** 区间统计，展示在图表下方 */
-export function summarize(points: ChartPoint[]): {
+/** 区间统计，展示在图表下方。points 传 kg，结果按 unit 换算成展示值 */
+export function summarize(
+  points: ChartPoint[],
+  unit: WeightUnit = 'kg'
+): {
   min: number
   max: number
   avg: number
   delta: number
 } | null {
   if (points.length === 0) return null
-  const ws = points.map((p) => p.weight)
+  const ws = points.map((p) => fromKg(p.weight, unit))
   const sum = ws.reduce((a, b) => a + b, 0)
   const r1 = (n: number): number => Math.round(n * 10) / 10
   return {

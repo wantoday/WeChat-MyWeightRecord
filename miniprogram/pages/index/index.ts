@@ -5,7 +5,7 @@ import { loadWeightUnit, saveWeightUnit } from '../../models/storage'
 import type { BmiResult, WeightUnit } from '../../models/types'
 import { calcBmi, targetProgress } from '../../utils/bmi'
 import { toFriendlyLabel, todayStr } from '../../utils/date'
-import { formatWeight, fromKg, roundKgForStore, toKg, unitLabel } from '../../utils/unit'
+import { deltaIn, formatWeight, fromKg, roundKgForStore, toKg, unitLabel } from '../../utils/unit'
 
 /**
  * 打卡页：录入体重，并汇总 BMI / 目标进度 / 与上次的变化。
@@ -132,10 +132,10 @@ Page({
       return `上次 ${toFriendlyLabel(prevDate)} ${formatWeight(prevWeightKg, unit)}${label}`
     }
 
-    const deltaKg = Math.round((savedWeight - prevWeightKg) * 10) / 10
-    if (deltaKg === 0) return `与 ${toFriendlyLabel(prevDate)} 持平`
-    const delta = Math.round(fromKg(deltaKg, unit) * 10) / 10
-    const verb = deltaKg < 0 ? '轻' : '重'
+    // 按展示单位取整后再判持平：否则会出现「差 0.05kg 报持平、斤下却显示 0.1」的矛盾
+    const delta = deltaIn(savedWeight - prevWeightKg, unit)
+    if (delta === 0) return `与 ${toFriendlyLabel(prevDate)} 持平`
+    const verb = delta < 0 ? '轻' : '重'
     return `比 ${toFriendlyLabel(prevDate)} ${verb} ${Math.abs(delta)}${label}`
   },
 

@@ -26,7 +26,8 @@
 
   <!-- 区间统计 -->
   <view class="card" wx:if="{{stat}}">
-    <view class="card-title">共 {{count}} 条记录</view>
+    <!-- 单位挂在标题上而不是每个数值后面：四项统计等宽居中，加后缀会让它们错位 -->
+    <view class="card-title">共 {{count}} 条记录 · 单位 {{unitLabel}}</view>
     <view class="stats">
       <view class="stat">
         <text class="stat-value">{{stat.min}}</text>

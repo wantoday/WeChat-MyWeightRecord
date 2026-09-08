@@ -1,12 +1,17 @@
 import { ensureProfile } from '../../models/profile'
 import * as records from '../../models/record'
-import type { ChartRange, WeightRecord } from '../../models/types'
+import { loadWeightUnit } from '../../models/storage'
+import type { ChartRange, WeightRecord, WeightUnit } from '../../models/types'
 import { drawWeightChart, summarize } from '../../utils/chart'
 import type { ChartPoint } from '../../utils/chart'
 import { daysAgoStr } from '../../utils/date'
+import { unitLabel } from '../../utils/unit'
 
 /**
  * 趋势页。
+ *
+ * 单位跟随打卡页的偏好（存储里的 weight_unit）：每次 onShow 重读，
+ * 所以在打卡页切完斤/kg 再切回来，y 轴刻度与区间统计会一起换算。
  *
  * Canvas 2D 节点必须等 onReady 之后才查得到，而切 tab 回来只触发 onShow。
  *
@@ -28,8 +33,12 @@ Page({
     range: 'month' as ChartRange,
     loading: true,
     hasData: false,
+    /** 统计值已按 unit 换算，不再是 kg */
     stat: null as { min: number; max: number; avg: number; delta: number } | null,
     count: 0,
+    /** 展示单位（跟随打卡页偏好），记录仍以 kg 存储 */
+    unit: 'jin' as WeightUnit,
+    unitLabel: '斤',
   },
 
   /** 画布上下文与尺寸，非渲染数据所以不放 data */
@@ -92,6 +101,7 @@ Page({
 
       this.points = rows.map((r: WeightRecord) => ({ date: r.date, weight: r.weight }))
       this.targetWeight = profile.targetWeight
+      const unit = loadWeightUnit()
 
       // 在 setData 回调里重绘：此时 hasData 已生效、canvas 恢复了高度，
       // initCanvas 才量得到真实尺寸（见文件头时序说明）
@@ -100,7 +110,9 @@ Page({
           loading: false,
           hasData: this.points.length > 0,
           count: this.points.length,
-          stat: summarize(this.points),
+          unit,
+          unitLabel: unitLabel(unit),
+          stat: summarize(this.points, unit),
         },
         () => this.redraw()
       )
@@ -122,6 +134,7 @@ Page({
       height: this.cssHeight,
       points: this.points,
       targetWeight: this.targetWeight,
+      unit: this.data.unit,
     })
   },
 
