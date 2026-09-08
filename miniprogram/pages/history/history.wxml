@@ -21,7 +21,7 @@
       </view>
       <view class="item-right">
         <text class="item-weight">{{item.weight}}</text>
-        <text class="item-unit">kg</text>
+        <text class="item-unit">{{unitLabel}}</text>
         <text class="item-delta is-{{item.deltaDir}}" wx:if="{{item.delta}}">{{item.delta}}</text>
       </view>
     </view>

@@ -15,12 +15,14 @@ npx vitest run tests/server.test.ts  # 只跑某个文件
 npx vitest run -t "每天一条"          # 按用例名过滤
 ```
 
-测试分四块，改代码后至少跑 `npm test`：
+测试分六块，改代码后至少跑 `npm test`：
 
 | 文件 | 覆盖 |
 |---|---|
 | `tests/server.test.ts` | **端到端**：起真实 HTTP 服务（临时数据目录），走「打卡 → 落盘」全程，校验每天一条、备注保留、入参校验、删除、档案合并、CSV 导出 |
 | `tests/record.test.ts` | 数据层：假 `wx.request` 顶替运行时，校验分页/过滤/并发合并/写后作废/错误提示 |
+| `tests/unit.test.ts` | 斤↔kg 换算、存储精度、差值取整（`deltaIn`）、单位偏好持久化（假 `wx` 存储） |
+| `tests/chart.test.ts` | 图表的单位换算：假 ctx 收集 `fillText`，断言斤模式下 y 轴刻度/统计恰为 kg 的两倍 |
 | `tests/date.test.ts` / `tests/bmi.test.ts` | 纯函数 |
 
 ⚠️ **先确认 node 在不在 PATH**。这台机器上曾经完全没装 node（`node_modules/` 是从另一台机器经 OneDrive 同步过来的，正是约束 10 警告的事），当时 `npm` / `npx` 全都 `command not found`。不在就**如实说明「本次改动未经 typecheck / 测试验证」**，不要假装跑过。
@@ -90,7 +92,11 @@ pages/*  →  models/{record,profile}  →  models/storage  →  微信本地存
 
 14. **`project.config.json` 被 git 跟踪，而开发者工具每次打开都会改写它**（补 `editorSetting`、`packOptions`、`babelSetting` 等）。所以它时不时处于 modified 状态、diff 有噪音；提交前只挑真正的改动（尤其别把 `urlCheck` 的改动混进去，见约束 1）。个人本地配置在 `project.private.config.json`，已 gitignore。
 
-15. **体重/身高区间在 `config.ts`，但服务端有一份手抄的。** 客户端三处校验（打卡、记录页改写、目标体重）都读 `WEIGHT_RANGE` / `HEIGHT_RANGE`；`server.js` 的 `WEIGHT_MIN` / `WEIGHT_MAX` 是同值副本，**它没法 import TS，改一处要改两处**，`tests/server.test.ts` 里有断言会拦住不一致。
+15. **体重/身高区间在 `config.ts`，但服务端有一份手抄的。** 客户端三处校验（打卡、记录页改写、目标体重）都读 `WEIGHT_RANGE` / `HEIGHT_RANGE`；`server.js` 的 `WEIGHT_MIN` / `WEIGHT_MAX` 是同值副本，**它没法 import TS，改一处要改两处**，`tests/server.test.ts` 里有断言会拦住不一致。注意这三处的提示文案都要按当前单位换算区间（`fromKg(WEIGHT_RANGE.min, unit)`），别把 kg 数字直接写进「请输入 x-y 斤」。
+
+16. **体重单位是全局展示偏好，存储永远是 kg。** 偏好放在本地存储 `weight_unit`（`storage.loadWeightUnit` / `saveWeightUnit`），只有打卡页能切。趋势 / 记录 / 我的三页都在各自的 `onShow → load()/reload()` 里**重读**它 —— 四个都是 tabBar 页，切回来必触发 `onShow`，所以不需要事件总线或全局状态；反过来说，**任何绕过 `onShow` 的刷新路径都会漏掉单位变化**。
+
+    新增展示或录入体重的地方一律走 `utils/unit`：展示用 `formatWeight`、两次记录之差用 `deltaIn`（先换算再取整，否则斤下会出现 0.6 这种不可能的值）、录入用 `roundKgForStore(toKg(v, unit), unit)` 再落库。图表同理：`drawWeightChart` / `summarize` 收 **kg 点集 + `unit`**，换算（含 y 轴留白 0.5kg、最小跨度 2kg）都在 `utils/chart.ts` 内部完成，页面不要先换算再传。**斤绝不进数据层** —— `models/` 和 `local-server/` 只认 kg。
 
 ## 现状
 
@@ -98,7 +104,7 @@ pages/*  →  models/{record,profile}  →  models/storage  →  微信本地存
 
 **验证到哪一步了（谨慎对待，别高估）**：
 
-- `tests/` 四个文件覆盖了数据层（手机本地存储）和遗留服务端的逻辑。**跑没跑过取决于当时机器上有没有 node**，交付时以实际执行结果为准，别默认它是绿的。
+- `tests/` 六个文件覆盖了数据层（手机本地存储）、单位换算和遗留服务端的逻辑。**跑没跑过取决于当时机器上有没有 node**，交付时以实际执行结果为准，别默认它是绿的。
 - **未在微信开发者工具 / 真机上验证过**：`wx.setStorageSync` 实际读写、Canvas 渲染、tabBar 切换刷新这些运行时行为，只有装了开发者工具的机器能走查。本机没装。
 - 开发者工具的 `libVersion` 两份配置不一致（`project.config.json` 3.5.5 vs `project.private.config.json` 3.17.2）。
 

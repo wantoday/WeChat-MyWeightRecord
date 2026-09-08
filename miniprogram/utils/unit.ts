@@ -34,6 +34,14 @@ export function formatWeight(kg: number, unit: WeightUnit): string {
   return String(Math.round(v * 100) / 100)
 }
 
+/**
+ * 按单位换算「两次体重之差」，保留 1 位小数。
+ * 先换算再取整：0.25kg 在斤下是 0.5 斤，若先按 kg 取整成 0.3 再乘 2 会得到 0.6。
+ */
+export function deltaIn(kgDelta: number, unit: WeightUnit): number {
+  return Math.round(fromKg(kgDelta, unit) * 10) / 10
+}
+
 /** 单位的中文/缩写标签 */
 export function unitLabel(unit: WeightUnit): string {
   return unit === 'jin' ? '斤' : 'kg'

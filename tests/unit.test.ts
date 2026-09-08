@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { loadWeightUnit, saveWeightUnit } from '../miniprogram/models/storage'
-import { formatWeight, fromKg, roundKgForStore, toKg, unitLabel } from '../miniprogram/utils/unit'
+import {
+  deltaIn,
+  formatWeight,
+  fromKg,
+  roundKgForStore,
+  toKg,
+  unitLabel,
+} from '../miniprogram/utils/unit'
 
 describe('单位换算', () => {
   it('kg ↔ 斤', () => {
@@ -22,6 +29,13 @@ describe('单位换算', () => {
     expect(formatWeight(70.4, 'kg')).toBe('70.4')
     expect(formatWeight(70, 'jin')).toBe('140')
     expect(formatWeight(70.75, 'jin')).toBe('141.5')
+  })
+
+  it('deltaIn 先换算再取整：0.25kg 之差在斤下是 0.5，不是 0.6', () => {
+    expect(deltaIn(0.25, 'jin')).toBe(0.5)
+    expect(deltaIn(0.25, 'kg')).toBe(0.3)
+    expect(deltaIn(-0.4, 'jin')).toBe(-0.8)
+    expect(deltaIn(0, 'jin')).toBe(0)
   })
 
   it('unitLabel', () => {
