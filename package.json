@@ -10,6 +10,6 @@
   "devDependencies": {
     "miniprogram-api-typings": "^5.2.3",
     "typescript": "^5.4.5",
-    "vitest": "^5.0.0"
+    "vitest": "^3"
   }
 }
