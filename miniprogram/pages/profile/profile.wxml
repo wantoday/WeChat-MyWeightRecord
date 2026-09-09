@@ -20,4 +20,18 @@
     </view>
   </view>
 
+  <view class="card" wx:if="{{syncEnabled}}">
+    <view class="row">
+      <text class="row-label">绑定微信号</text>
+      <text class="row-value">{{syncBound ? '已绑定' : '未绑定'}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="row" bindtap="onSyncTap">
+      <text class="row-label">数据同步</text>
+      <text class="row-value">{{syncing ? '同步中…' : (syncBound ? '立即同步 ›' : '绑定并同步 ›')}}</text>
+    </view>
+    <view class="range-tip" wx:if="{{!syncBound}}">未绑定时数据只在本机；其它设备用同一微信号点一次同步即可拉回同一份数据</view>
+    <view class="range-tip" wx:if="{{syncTimeText}}">{{syncTimeText}}</view>
+  </view>
+
 </view>

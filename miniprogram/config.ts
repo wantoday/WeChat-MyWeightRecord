@@ -22,3 +22,10 @@ export const BMI_THRESHOLDS = {
   normal: 24,
   overweight: 28,
 } as const
+
+/**
+ * 微信云开发环境 ID，形如 'weight-record-1x2y3z'。
+ * 留空 = 纯本地模式：不初始化 wx.cloud，「我的」页也不显示同步入口。
+ * 开通云开发后把环境 ID 填进来即可（云开发控制台 → 设置 → 环境 ID）。
+ */
+export const CLOUD_ENV_ID = 'cloud1-d2gmhn7a77422fd66'

@@ -1,0 +1,9 @@
+{
+  "name": "weightSync",
+  "version": "1.0.0",
+  "description": "体重记录：多设备数据同步（pull/push 全量快照 + CAS 乐观锁）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

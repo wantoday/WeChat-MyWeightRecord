@@ -22,3 +22,6 @@ local-server/data/
 .idea/
 Thumbs.db
 desktop.ini
+
+# 云函数的依赖（用开发者工具「云端安装依赖」装，不要本地 npm install）
+cloudfunctions/*/node_modules/

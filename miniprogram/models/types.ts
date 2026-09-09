@@ -16,6 +16,12 @@ export interface WeightRecord {
   /** 毫秒时间戳 */
   createdAt: number
   updatedAt: number
+  /**
+   * 软删除墓碑：true 表示这一天的记录已删除。
+   * 不展示、但必须保留 —— 否则「删除」这件事同步不到别的设备。
+   * 老数据没有这个键，等价于未删除。
+   */
+  deleted?: true
 }
 
 /** 用户档案。本地服务单人使用，全局只有一份（_id 固定为 'profile_local'）。 */
@@ -44,3 +50,27 @@ export interface BmiResult {
 
 /** 图表的时间范围 */
 export type ChartRange = 'week' | 'month' | 'all'
+
+/**
+ * 单位偏好 + 它的最后修改时间。
+ * 单独一个 'jin' / 'kg' 无法判断谁更新，带上 updatedAt 才能做 last-write-wins。
+ */
+export interface UnitPref {
+  unit: WeightUnit
+  updatedAt: number
+}
+
+/** 一次同步上传 / 下载的全部数据。整体读写，不做增量协议（数据量很小）。 */
+export interface SyncSnapshot {
+  records: WeightRecord[]
+  profile: UserProfile
+  unit: UnitPref
+}
+
+/** 同步状态。只存在本机，从不上云。 */
+export interface SyncMeta {
+  /** 上次成功同步的服务器时间戳，0 表示从未同步过 */
+  lastSyncAt: number
+  /** 是否已成功连上过云 —— 即「已绑定」 */
+  bound: boolean
+}
