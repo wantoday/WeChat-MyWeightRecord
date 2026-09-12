@@ -22,6 +22,19 @@
     <view class="empty" wx:if="{{!loading && !hasData}}">
       还没有记录，去「打卡」记一笔吧
     </view>
+
+    <!-- 好友对比图例：只有自己时不展示（下方统计卡已经够了） -->
+    <view class="legend" wx:if="{{legend.length > 1}}">
+      <view class="card-title">好友对比 · 单位 {{unitLabel}}</view>
+      <view class="legend-item" wx:for="{{legend}}" wx:key="id">
+        <view class="legend-dot" style="background: {{item.color}}"></view>
+        <text class="legend-name">{{item.name}}</text>
+        <text class="legend-value">{{item.latest}}</text>
+        <!-- 必须单行书写：text 里的换行会被渲染出来，多行会让整行变高 -->
+        <text class="legend-delta {{item.delta < 0 ? 'is-down' : (item.delta > 0 ? 'is-up' : '')}}">{{item.delta > 0 ? '+' : ''}}{{item.delta}}</text>
+      </view>
+      <view class="legend-hint" wx:if="{{friendHint}}">{{friendHint}}</view>
+    </view>
   </view>
 
   <!-- 区间统计 -->
@@ -47,6 +60,16 @@
         <text class="stat-key">区间变化</text>
       </view>
     </view>
+  </view>
+
+  <!-- 好友计划：没配云环境 ID 时整张卡隐藏 -->
+  <view class="card" wx:if="{{planEnabled}}">
+    <view class="row" bindtap="goPlan">
+      <text class="row-label">好友减肥计划</text>
+      <text class="row-value">{{hasPlan ? (planName || '已加入') + ' ›' : '邀请好友一起减 ›'}}</text>
+    </view>
+    <view class="range-tip" wx:if="{{hasPlan && planCode}}">邀请码 {{planCode}}，好友在「我的」里输入就能加入；上面这张图会叠上彼此的曲线</view>
+    <view class="range-tip" wx:else>加入后只共享日期和体重，备注不会上传给好友</view>
   </view>
 
 </view>

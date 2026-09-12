@@ -1,0 +1,90 @@
+/* 输入框：底部一条线，和卡片的留白对齐 */
+.field {
+  height: 88rpx;
+  border-bottom: 1rpx solid var(--line);
+  font-size: 30rpx;
+}
+
+.code-field {
+  /* 邀请码用大字号 + 字间距，方便对着念 / 抄 */
+  font-size: 40rpx;
+  letter-spacing: 8rpx;
+}
+
+.btn-primary,
+.btn-ghost {
+  margin-top: 32rpx;
+}
+
+/* 邀请码一行：左边大字码，右边复制 */
+.code-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.code {
+  font-size: 60rpx;
+  font-weight: 600;
+  letter-spacing: 10rpx;
+}
+
+.copy {
+  border: 1rpx solid var(--line);
+  color: var(--text-sub);
+  border-radius: 12rpx;
+  padding: 8rpx 24rpx;
+  font-size: 26rpx;
+}
+
+/* 成员列表：昵称 / 最新体重 / 变化 */
+.member {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  font-size: 28rpx;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.member-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-me {
+  color: var(--text-sub);
+  font-size: 24rpx;
+}
+
+.member-value {
+  width: 140rpx;
+  text-align: right;
+}
+
+.member-delta {
+  width: 140rpx;
+  text-align: right;
+  color: var(--text-sub);
+}
+
+.member-delta.is-down {
+  color: var(--brand);
+}
+
+.member-delta.is-up {
+  color: #ff9500;
+}
+
+.leave {
+  color: var(--danger);
+}
+
+/* 卡片下方的说明文案，与「我的」页的 range-tip 一致 */
+.tip {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  line-height: 1.6;
+  padding: 0 8rpx 24rpx;
+}

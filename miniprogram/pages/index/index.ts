@@ -1,4 +1,5 @@
 import { WEIGHT_RANGE } from '../../config'
+import { pushMyPoints } from '../../models/plan'
 import { ensureProfile } from '../../models/profile'
 import * as records from '../../models/record'
 import { loadWeightUnit, saveWeightUnit } from '../../models/storage'
@@ -194,6 +195,9 @@ Page({
     try {
       await records.upsertByDate(this.data.date, kg)
       wx.showToast({ title: this.data.savedWeight ? '已更新' : '打卡成功', icon: 'success' })
+      // 加入好友计划后自动把最新的体重同步过去；没加入时是 no-op，
+      // 失败也只记日志 —— 打卡本身已经成功，不该因为网络问题弹「失败」吓人
+      void pushMyPoints()
       await this.refresh()
     } catch (err) {
       console.error('[index] save failed', err)

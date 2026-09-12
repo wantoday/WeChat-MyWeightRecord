@@ -74,3 +74,44 @@ export interface SyncMeta {
   /** 是否已成功连上过云 —— 即「已绑定」 */
   bound: boolean
 }
+
+/**
+ * 上传到好友计划的点。**只有日期和体重** ——
+ * 备注、身高、目标体重一律不上云：计划里别人只需要知道「哪天多重」。
+ */
+export interface PlanPoint {
+  /** 'YYYY-MM-DD' */
+  date: string
+  /** kg，1 位小数 */
+  weight: number
+}
+
+/**
+ * 计划里的一个成员（服务端返回的形状）。
+ * 注意没有 openid —— 服务端会剥掉，客户端拿别人的 openid 也没用。
+ */
+export interface PlanMember {
+  /** 列表用的稳定 key（按 joinedAt 升序编号），不含 openid */
+  id: string
+  nickname: string
+  points: PlanPoint[]
+  updatedAt: number
+  /** 是不是「我」—— 客户端拿不到自己的 openid，只能靠服务端标记 */
+  isMe: boolean
+}
+
+/** 计划概要。id 与 code 同一个值：6 位邀请码就是 plan 的 _id。 */
+export interface PlanInfo {
+  id: string
+  name: string
+  code: string
+}
+
+/** 本机记住的「我加入了哪个计划」。只存在本机，从不上云。 */
+export interface PlanLocal {
+  planId: string
+  name: string
+  code: string
+  nickname: string
+  joinedAt: number
+}

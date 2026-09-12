@@ -71,3 +71,68 @@
   font-size: 22rpx;
   color: var(--text-sub);
 }
+
+/* 好友对比图例 */
+.legend {
+  margin-top: 8rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--line);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  height: 56rpx;
+  font-size: 26rpx;
+}
+
+.legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 8rpx;
+  margin-right: 12rpx;
+  flex: none;
+}
+
+.legend-name {
+  flex: 1;
+  color: var(--text);
+  /* 昵称可能很长，超出的部分截断，别把右侧数值挤出去 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legend-value {
+  width: 120rpx;
+  text-align: right;
+  color: var(--text);
+}
+
+.legend-delta {
+  width: 120rpx;
+  text-align: right;
+  color: var(--text-sub);
+}
+
+.legend-delta.is-down {
+  color: var(--brand);
+}
+
+.legend-delta.is-up {
+  color: #ff9500;
+}
+
+.legend-hint {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  padding-top: 8rpx;
+}
+
+/* 与「我的」页一致的卡片底部说明文案 */
+.range-tip {
+  font-size: 22rpx;
+  color: var(--text-sub);
+  line-height: 1.6;
+  padding-top: 8rpx;
+}

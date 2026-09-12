@@ -34,4 +34,13 @@
     <view class="range-tip" wx:if="{{syncTimeText}}">{{syncTimeText}}</view>
   </view>
 
+  <view class="card" wx:if="{{syncEnabled}}">
+    <view class="row" bindtap="goPlan">
+      <text class="row-label">好友减肥计划</text>
+      <text class="row-value">{{planName ? planName + ' ›' : '创建或加入 ›'}}</text>
+    </view>
+    <view class="range-tip" wx:if="{{planCode}}">邀请码 {{planCode}}，发给微信好友即可一起记录；只共享日期和体重</view>
+    <view class="range-tip" wx:else>邀请好友一起记录，在趋势页看到彼此的减重曲线</view>
+  </view>
+
 </view>

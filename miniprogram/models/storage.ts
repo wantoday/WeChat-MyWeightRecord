@@ -1,5 +1,12 @@
 import { WEIGHT_RANGE } from '../config'
-import type { SyncMeta, UnitPref, UserProfile, WeightRecord, WeightUnit } from './types'
+import type {
+  PlanLocal,
+  SyncMeta,
+  UnitPref,
+  UserProfile,
+  WeightRecord,
+  WeightUnit,
+} from './types'
 
 /**
  * 手机本地存储后端 —— 替代 local-server，数据直接存在手机里。
@@ -15,6 +22,7 @@ const RECORDS_KEY = 'weight_records'
 const PROFILE_KEY = 'weight_profile'
 const UNIT_KEY = 'weight_unit'
 const SYNC_META_KEY = 'weight_sync_meta'
+const PLAN_KEY = 'weight_plan'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -181,4 +189,33 @@ export function loadSyncMeta(): SyncMeta {
 
 export function saveSyncMeta(meta: SyncMeta): void {
   wx.setStorageSync(SYNC_META_KEY, meta)
+}
+
+/**
+ * 本机加入的减肥计划；没加入过返回 null。
+ * 字段缺失一律当成「没加入」—— 不做迁移，宁可让用户重新输一次邀请码，
+ * 也好过拿半个 planId 去请求云端。
+ */
+export function loadPlanLocal(): PlanLocal | null {
+  const raw: unknown = wx.getStorageSync(PLAN_KEY)
+  if (!raw || typeof raw !== 'object') return null
+  const p = raw as Partial<PlanLocal>
+  if (typeof p.planId !== 'string' || !p.planId) return null
+  if (typeof p.code !== 'string' || !p.code) return null
+  return {
+    planId: p.planId,
+    name: typeof p.name === 'string' ? p.name : '',
+    code: p.code,
+    nickname: typeof p.nickname === 'string' ? p.nickname : '',
+    joinedAt: typeof p.joinedAt === 'number' ? p.joinedAt : 0,
+  }
+}
+
+export function savePlanLocal(plan: PlanLocal): void {
+  wx.setStorageSync(PLAN_KEY, plan)
+}
+
+/** 退出计划：抹掉本机记录。云端的成员数据由云函数删除，不归这里管。 */
+export function clearPlanLocal(): void {
+  wx.removeStorageSync(PLAN_KEY)
 }

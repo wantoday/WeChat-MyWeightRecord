@@ -29,3 +29,16 @@ export const BMI_THRESHOLDS = {
  * 开通云开发后把环境 ID 填进来即可（云开发控制台 → 设置 → 环境 ID）。
  */
 export const CLOUD_ENV_ID = 'cloud1-d2gmhn7a77422fd66'
+
+/** 一个减肥计划最多多少人（云函数 weightPlan 里有一份副本 PLAN_MAX_MEMBERS） */
+export const PLAN_MAX_MEMBERS = 10
+
+/**
+ * 上传给计划的历史点数上限（云函数里有一份副本 MAX_POINTS）。
+ * 既是云函数入参体积的保险，也够画一年多的减重过程 —— 每天一条，366 条 = 一整年。
+ */
+export const PLAN_POINT_LIMIT = 366
+
+/** 计划名 / 昵称长度上限，云函数侧同样校验一次 */
+export const PLAN_NAME_MAX = 12
+export const PLAN_NICKNAME_MAX = 8

@@ -1,4 +1,5 @@
 import { HEIGHT_RANGE, WEIGHT_RANGE } from '../../config'
+import { loadPlan } from '../../models/plan'
 import { ensureProfile, saveProfile } from '../../models/profile'
 import { countRecords } from '../../models/record'
 import { getSyncStatus, isSyncEnabled, syncNow } from '../../models/sync'
@@ -46,6 +47,9 @@ Page({
     syncing: false,
     unit: 'jin' as WeightUnit,
     unitLabel: '斤',
+    /** 好友计划入口：没加入时只显示引导 */
+    planName: '',
+    planCode: '',
   },
 
   /** 同步进行中。必须写在 Page() 字面量里，this.syncLocked 才有类型 */
@@ -62,6 +66,7 @@ Page({
       const meta = getSyncStatus()
       const unit = loadWeightUnit()
       const label = unitLabel(unit)
+      const plan = loadPlan()
       this.setData({
         loading: false,
         heightCm: profile.heightCm,
@@ -78,6 +83,8 @@ Page({
         syncEnabled: isSyncEnabled(),
         syncBound: meta.bound,
         syncTimeText: formatLastSync(meta.lastSyncAt),
+        planName: plan ? plan.name : '',
+        planCode: plan ? plan.code : '',
       })
     } catch (err) {
       this.setData({ loading: false })
@@ -186,5 +193,9 @@ Page({
       this.setData({ syncing: false })
       await this.load()
     }
+  },
+
+  goPlan(): void {
+    wx.navigateTo({ url: '/pages/plan/plan' })
   },
 })

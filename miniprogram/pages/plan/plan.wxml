@@ -1,0 +1,88 @@
+<view class="page-pad">
+
+  <!-- 没配云环境 ID：整个功能不可用，只给一句说明 -->
+  <view class="card" wx:if="{{!planEnabled}}">
+    <view class="empty">好友计划需要云同步：在 miniprogram/config.ts 的 CLOUD_ENV_ID 里填上微信云开发环境 ID 后重新编译</view>
+  </view>
+
+  <!-- 未加入：创建 / 加入 -->
+  <block wx:if="{{planEnabled && !hasPlan}}">
+    <view class="card">
+      <view class="card-title">创建一个计划</view>
+      <input
+        class="field"
+        placeholder="计划名，如「夏天一起瘦」"
+        value="{{nameInput}}"
+        maxlength="12"
+        bindinput="onNameInput"
+      />
+      <input
+        class="field"
+        placeholder="我在计划里的昵称，如「小明」"
+        value="{{nicknameInput}}"
+        maxlength="8"
+        bindinput="onNicknameInput"
+      />
+      <view class="btn-primary {{submitting ? 'is-disabled' : ''}}" bindtap="onCreate">创建并拿到邀请码</view>
+    </view>
+
+    <view class="card">
+      <view class="card-title">用邀请码加入</view>
+      <input
+        class="field code-field"
+        placeholder="6 位邀请码"
+        value="{{codeInput}}"
+        maxlength="6"
+        bindinput="onCodeInput"
+      />
+      <input
+        class="field"
+        placeholder="我的昵称"
+        value="{{nicknameInput}}"
+        maxlength="8"
+        bindinput="onNicknameInput"
+      />
+      <view class="btn-ghost" bindtap="onJoin">加入计划</view>
+    </view>
+
+    <view class="tip">加入后，好友在趋势页能看到彼此的曲线。只共享日期和体重 —— 备注、身高、目标体重不会上传。</view>
+  </block>
+
+  <!-- 已加入：邀请码 / 昵称 / 成员 / 退出 -->
+  <block wx:if="{{planEnabled && hasPlan}}">
+    <view class="card">
+      <view class="card-title">{{planName || '我的计划'}}</view>
+      <view class="code-line">
+        <text class="code">{{planCode}}</text>
+        <view class="copy" bindtap="onCopyCode">复制</view>
+      </view>
+      <view class="tip">把这个 6 位邀请码发给微信好友，好友在「我的 → 好友减肥计划」里输入即可加入。</view>
+    </view>
+
+    <view class="card">
+      <view class="row" bindtap="onRename">
+        <text class="row-label">我的昵称</text>
+        <text class="row-value">{{nickname || '未设置'}} ›</text>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-title">成员 · 单位 {{unitLabel}}</view>
+      <view class="member" wx:for="{{members}}" wx:key="id">
+        <text class="member-name">{{item.nickname}}<text class="member-me" wx:if="{{item.isMe}}">（我）</text></text>
+        <text class="member-value">{{item.latest}}</text>
+        <!-- 必须单行书写：text 里的换行会被渲染出来，多行会把整行撑高 -->
+        <text class="member-delta {{item.delta < 0 ? 'is-down' : (item.delta > 0 ? 'is-up' : '')}}">{{item.delta > 0 ? '+' : ''}}{{item.delta}}</text>
+      </view>
+      <view class="empty" wx:if="{{!loading && members.length === 0}}">还没有人上传数据，去打卡记一笔</view>
+      <view class="btn-ghost" bindtap="onRefresh">刷新</view>
+    </view>
+
+    <view class="card">
+      <view class="row" bindtap="onLeave">
+        <text class="row-label leave">退出计划</text>
+      </view>
+    </view>
+  </block>
+
+</view>

@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/chart/chart",
     "pages/history/history",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/plan/plan"
   ],
   "window": {
     "backgroundTextStyle": "dark",

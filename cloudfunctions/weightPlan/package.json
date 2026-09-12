@@ -1,0 +1,9 @@
+{
+  "name": "weightPlan",
+  "version": "1.0.0",
+  "description": "体重记录：好友减肥计划（邀请码加入、各自上传体重、拉取成员曲线）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,5 +1,5 @@
 import type { WeightUnit } from '../models/types'
-import { toShortLabel } from './date'
+import { diffDays, fromDateStr, toDateStr, toShortLabel } from './date'
 import { fromKg } from './unit'
 
 /**
@@ -10,6 +10,9 @@ import { fromKg } from './unit'
  *
  * 点集一律传 kg（存储单位），展示单位通过 opts.unit 指定，
  * y 轴刻度 / 目标线 / 留白都在这里换算 —— 调用方不必先换算再传进来。
+ *
+ * 支持多条线（好友计划）：传 series，每条线一个颜色；
+ * 只画自己时沿用 points 快捷入口，内部同样当成一条 series。
  */
 
 export interface ChartPoint {
@@ -17,12 +20,24 @@ export interface ChartPoint {
   weight: number
 }
 
+/** 一条线。date 相同的点按日期对齐到同一 x，所以不同人的点能叠在一根时间轴上。 */
+export interface ChartSeries {
+  name?: string
+  /** weight 单位 kg，按 date 升序（乱序也能画，这里会先排一遍） */
+  points: ChartPoint[]
+  color?: string
+  /** 重点线（我的）：加粗 + 渐变填充 + 数据点；好友线只画细线，人多了才不糊 */
+  emphasized?: boolean
+}
+
 export interface DrawOptions {
   /** CSS 像素下的绘图区尺寸（不是 canvas.width，后者已乘 dpr） */
   width: number
   height: number
-  /** 点集，weight 单位 kg */
-  points: ChartPoint[]
+  /** 单条线的快捷入口，与 series 二选一 */
+  points?: ChartPoint[]
+  /** 多条线（好友对比）。传了它，points 会被忽略 */
+  series?: ChartSeries[]
   /** 目标体重（kg），>0 时画一条虚线参考线 */
   targetWeight?: number
   /** y 轴展示单位，默认 kg */
@@ -32,26 +47,62 @@ export interface DrawOptions {
 const PADDING = { top: 20, right: 16, bottom: 28, left: 40 }
 const BRAND = '#07c160'
 
+/** 起止日期中间那一天，用于 x 轴中间那个标签 */
+function addDays(date: string, days: number): string {
+  const d = fromDateStr(date)
+  d.setDate(d.getDate() + days)
+  return toDateStr(d)
+}
+
 export function drawWeightChart(
   ctx: WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D,
   opts: DrawOptions
 ): void {
-  const { width, height, points, targetWeight = 0, unit = 'kg' } = opts
+  const { width, height, targetWeight = 0, unit = 'kg' } = opts
   ctx.clearRect(0, 0, width, height)
 
-  if (points.length === 0) return
+  const all: ChartSeries[] = (opts.series ?? (opts.points ? [{ points: opts.points }] : []))
+    .filter((s) => s.points.length > 0)
+    .map((s, i) => ({
+      ...s,
+      points: s.points.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)),
+      // 只画一条线时它就是「我的」，加粗填充；多条线时由调用方用 emphasized 指定
+      emphasized: s.emphasized ?? (opts.series ? false : i === 0),
+    }))
+  if (all.length === 0) return
 
   const plotW = width - PADDING.left - PADDING.right
   const plotH = height - PADDING.top - PADDING.bottom
 
+  /*
+   * x 轴按「自然日」而不是点序：多人的记录日期对不上，
+   * 按点序画会让「3 号」和「10 号」落在同一个位置，趋势就失真了。
+   * 日期跨度由全部线的日期并集决定。
+   */
+  let start = all[0].points[0].date
+  let end = start
+  for (const s of all) {
+    for (const p of s.points) {
+      if (p.date < start) start = p.date
+      if (p.date > end) end = p.date
+    }
+  }
+  const rawSpan = diffDays(end, start)
+  const span = Math.max(1, rawSpan)
+  const xOf = (date: string): number =>
+    rawSpan === 0
+      ? PADDING.left + plotW / 2
+      : PADDING.left + (diffDays(date, start) / span) * plotW
+
   // 全部纵向计算都在展示单位下进行（含留白与最小跨度），换算一次存成 ys
-  const ys = points.map((p) => fromKg(p.weight, unit))
+  const ysOf = (s: ChartSeries): number[] => s.points.map((p) => fromKg(p.weight, unit))
+  const flatYs = all.reduce<number[]>((acc, s) => acc.concat(ysOf(s)), [])
   const target = fromKg(targetWeight, unit)
   const MARGIN = fromKg(0.5, unit)
   const MIN_SPAN = fromKg(2, unit)
 
-  // y 轴范围：数据 min/max 上下各留 0.5kg，并把目标线纳入范围，避免它被画到区域外
-  const weights = ys.slice()
+  // y 轴范围：所有线的 min/max 各留 0.5kg，并把目标线纳入范围，避免它被画到区域外
+  const weights = flatYs.slice()
   if (targetWeight > 0) weights.push(target)
   let lo = Math.min(...weights) - MARGIN
   let hi = Math.max(...weights) + MARGIN
@@ -62,12 +113,7 @@ export function drawWeightChart(
     hi = mid + MIN_SPAN / 2
   }
 
-  const xOf = (i: number): number =>
-    points.length === 1
-      ? PADDING.left + plotW / 2
-      : PADDING.left + (i / (points.length - 1)) * plotW
-  const yOf = (w: number): number =>
-    PADDING.top + (1 - (w - lo) / (hi - lo)) * plotH
+  const yOf = (w: number): number => PADDING.top + (1 - (w - lo) / (hi - lo)) * plotH
 
   /* 横向网格 + y 轴刻度 */
   ctx.lineWidth = 1
@@ -98,55 +144,58 @@ export function drawWeightChart(
     ctx.setLineDash([])
   }
 
-  /* 折线下方渐变填充 */
-  const grad = ctx.createLinearGradient(0, PADDING.top, 0, PADDING.top + plotH)
-  grad.addColorStop(0, 'rgba(7,193,96,0.22)')
-  grad.addColorStop(1, 'rgba(7,193,96,0)')
-  ctx.fillStyle = grad
-  ctx.beginPath()
-  ctx.moveTo(xOf(0), PADDING.top + plotH)
-  ys.forEach((w, i) => ctx.lineTo(xOf(i), yOf(w)))
-  ctx.lineTo(xOf(points.length - 1), PADDING.top + plotH)
-  ctx.closePath()
-  ctx.fill()
+  /* 每条线：重点线（我的）带渐变填充与数据点，好友线只描一条细线 */
+  const showDots = all.length === 1 && all[0].points.length <= 31
+  all.forEach((s) => {
+    const ys = ysOf(s)
+    const color = s.color ?? BRAND
 
-  /* 折线本体 */
-  ctx.strokeStyle = BRAND
-  ctx.lineWidth = 2
-  ctx.lineJoin = 'round'
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ys.forEach((w, i) => {
-    const x = xOf(i)
-    const y = yOf(w)
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
-  })
-  ctx.stroke()
-
-  /* 数据点：点多时只画首尾，否则会糊成一片 */
-  const showDots = points.length <= 31
-  if (showDots) {
-    ctx.fillStyle = '#ffffff'
-    ys.forEach((w, i) => {
+    if (s.emphasized) {
+      const grad = ctx.createLinearGradient(0, PADDING.top, 0, PADDING.top + plotH)
+      grad.addColorStop(0, 'rgba(7,193,96,0.22)')
+      grad.addColorStop(1, 'rgba(7,193,96,0)')
+      ctx.fillStyle = grad
       ctx.beginPath()
-      ctx.arc(xOf(i), yOf(w), 3, 0, Math.PI * 2)
+      ctx.moveTo(xOf(s.points[0].date), PADDING.top + plotH)
+      ys.forEach((w, i) => ctx.lineTo(xOf(s.points[i].date), yOf(w)))
+      ctx.lineTo(xOf(s.points[s.points.length - 1].date), PADDING.top + plotH)
+      ctx.closePath()
       ctx.fill()
-      ctx.stroke()
-    })
-  }
+    }
 
-  /* x 轴标签：最多 3 个（首 / 中 / 尾），避免重叠 */
+    ctx.strokeStyle = color
+    ctx.lineWidth = s.emphasized ? 2.5 : 1.5
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.beginPath()
+    ys.forEach((w, i) => {
+      const x = xOf(s.points[i].date)
+      const y = yOf(w)
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+
+    if (showDots) {
+      ctx.fillStyle = '#ffffff'
+      ys.forEach((w, i) => {
+        ctx.beginPath()
+        ctx.arc(xOf(s.points[i].date), yOf(w), 3, 0, Math.PI * 2)
+        ctx.fill()
+        ctx.stroke()
+      })
+    }
+  })
+
+  /* x 轴标签：首 / 中 / 尾，按整张图的日期范围取，不能按某一条线的点序 */
   ctx.fillStyle = '#8a8a8e'
   ctx.textBaseline = 'top'
-  const idxs =
-    points.length === 1
-      ? [0]
-      : [0, Math.floor((points.length - 1) / 2), points.length - 1]
-  const uniq = idxs.filter((v, i) => idxs.indexOf(v) === i)
-  uniq.forEach((i) => {
-    ctx.textAlign = i === 0 ? 'left' : i === points.length - 1 ? 'right' : 'center'
-    ctx.fillText(toShortLabel(points[i].date), xOf(i), PADDING.top + plotH + 8)
+  const labels =
+    rawSpan === 0 ? [start] : [start, addDays(start, Math.round(rawSpan / 2)), end]
+  const uniq = labels.filter((v, i) => labels.indexOf(v) === i)
+  uniq.forEach((date, i) => {
+    ctx.textAlign = i === 0 ? 'left' : i === uniq.length - 1 ? 'right' : 'center'
+    ctx.fillText(toShortLabel(date), xOf(date), PADDING.top + plotH + 8)
   })
 }
 

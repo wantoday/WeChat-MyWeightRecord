@@ -89,6 +89,96 @@ describe('drawWeightChart 的 y 轴刻度', () => {
   })
 })
 
+/**
+ * 记录折线路径的假 ctx：按 beginPath 分组，用来校验多条线的对齐与 y 轴范围。
+ * 网格线也是 moveTo/lineTo，靠「分组」把它们和真正的折线区分开。
+ */
+function pathCtx() {
+  const groups: { x: number; y: number }[][] = []
+  const texts: string[] = []
+  let current: { x: number; y: number }[] = []
+  const ctx = {
+    groups,
+    texts,
+    clearRect: vi.fn(),
+    beginPath() {
+      current = []
+      groups.push(current)
+    },
+    closePath: vi.fn(),
+    moveTo: (x: number, y: number) => current.push({ x, y }),
+    lineTo: (x: number, y: number) => current.push({ x, y }),
+    arc: vi.fn(),
+    stroke: vi.fn(),
+    fill: vi.fn(),
+    setLineDash: vi.fn(),
+    createLinearGradient: () => ({ addColorStop: vi.fn() }),
+    fillText: (s: string) => {
+      texts.push(s)
+    },
+  }
+  return ctx as unknown as WechatMiniprogram.CanvasRenderingContext.CanvasRenderingContext2D & {
+    groups: { x: number; y: number }[][]
+    texts: string[]
+  }
+}
+
+describe('drawWeightChart 的多条线（好友对比）', () => {
+  it('不同人的同一天落在同一个 x 上，且按自然日等距', () => {
+    const ctx = pathCtx()
+    drawWeightChart(ctx, {
+      ...SIZE,
+      series: [
+        // 我：1 号、2 号、3 号连着记（体重故意不同，好和水平网格线区分）
+        {
+          emphasized: true,
+          points: [
+            { date: '2026-09-01', weight: 70 },
+            { date: '2026-09-02', weight: 69 },
+            { date: '2026-09-03', weight: 71 },
+          ],
+        },
+        // 好友：只记了 1 号和 3 号，中间空一天
+        {
+          points: [
+            { date: '2026-09-01', weight: 68 },
+            { date: '2026-09-03', weight: 67 },
+          ],
+        },
+      ],
+      unit: 'kg',
+    })
+
+    // 我的三个点：1/2/3 号等距
+    const mine = ctx.groups.find((g) => g.length === 3)
+    expect(mine).toBeTruthy()
+    const [a, b, c] = mine as { x: number; y: number }[]
+    expect(b.x - a.x).toBeCloseTo(c.x - b.x, 5)
+    // 好友少了 2 号，3 号那个点必须和我的 3 号落在同一个 x 上 ——
+    // 否则「同一天」会被画到两个位置，多人趋势就失真了
+    const friend = ctx.groups.find(
+      (g) => g.length === 2 && Math.abs(g[0].x - a.x) < 0.001 && g[0].y !== a.y
+    ) as { x: number; y: number }[]
+    expect(friend).toBeTruthy()
+    expect(friend[1].x).toBeCloseTo(c.x, 5)
+  })
+
+  it('y 轴范围跨所有线，好友更重也不会画出框外', () => {
+    const ctx = pathCtx()
+    drawWeightChart(ctx, {
+      ...SIZE,
+      series: [
+        { points: [{ date: '2026-09-01', weight: 60 }] },
+        { points: [{ date: '2026-09-01', weight: 90 }] },
+      ],
+      unit: 'kg',
+    })
+    const ticks = yTicks(ctx.texts)
+    expect(Math.min(...ticks)).toBeLessThan(60)
+    expect(Math.max(...ticks)).toBeGreaterThan(90)
+  })
+})
+
 describe('summarize 按单位换算', () => {
   it('kg 为默认单位', () => {
     expect(summarize(POINTS)).toEqual({ min: 70, max: 71, avg: 70.5, delta: 1 })
